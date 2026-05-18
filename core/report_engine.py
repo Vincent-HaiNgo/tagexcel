@@ -1,4 +1,5 @@
 from datetime import datetime
+from utils.html_templates import page_start, page_end, card, styled_table, timestamp_label
 
 
 def _compute_npv(values, rate):
@@ -159,46 +160,39 @@ def compute_report(df, config):
     }
 
 
-def render_report_html(report):
+def render_report_html(report, theme="light"):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    html = f"""<!DOCTYPE html>
-<html><head><meta charset="utf-8"><style>
-body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 12px; }}
-h2 {{ border-bottom: 2px solid #4db6ac; padding-bottom: 4px; }}
-table {{ border-collapse: collapse; width: auto; min-width: 50%; margin: 8px 0; font-size: 13px; }}
-th {{ background: #00897b; color: white; padding: 6px 10px; text-align: right; border: 1px solid #00695c; }}
-td {{ padding: 5px 10px; border: 1px solid #999; text-align: right; }}
-tr:nth-child(even) {{ background: rgba(0,137,123,0.08); }}
-td:first-child, th:first-child {{ text-align: left; font-weight: bold; }}
-</style></head><body>
-<h2>Custom Report</h2>
-<p style="opacity:0.6;font-size:12px;">Generated: {ts} | df-working</p>
-"""
+    html = page_start("Custom Report", theme)
+    html += "<h2>" + chr(9670) + " Custom Report</h2>"
+    html += timestamp_label(ts)
     if report.get("group_by"):
-        html += f"<p>Group by: <b>{report['group_by']}</b></p>"
+        html += f'<p class="muted">Group by: <b>{report["group_by"]}</b></p>'
 
     if not report["rows"]:
-        html += "<p>No data to report.</p></body></html>"
+        html += card(chr(9670) + " Report Data", '<p class="muted">No data to report.</p>', chr(9670), theme)
+        html += page_end()
         return html
 
-    html += "<div style='overflow-x:auto;'><table><tr><th></th>"
+    headers = [""]
     for fi in report["functions"]:
-        html += f"<th>{fi['col']} &rsaquo; {fi['name']}</th>"
-    html += "</tr>"
+        headers.append(f"{fi['col']} \u203a {fi['name']}")
+    rows = []
     for row in report["rows"]:
-        html += f"<tr><td>{row['group']}</td>"
+        r = [row["group"]]
         for fi in report["functions"]:
             val = row.get(fi["key"], "")
-            display = ""
             if val is None:
-                display = "<span style='color:#999;'>N/A</span>"
+                r.append('<span style="color:#999;">N/A</span>')
             elif isinstance(val, float):
-                display = f"{val:,.2f}"
+                r.append(f"{val:,.2f}")
             else:
-                display = str(val)
-            html += f"<td>{display}</td>"
-        html += "</tr>"
-    html += "</table></div></body></html>"
+                r.append(str(val))
+        rows.append(r)
+    table_html = styled_table(headers, rows, theme, first_col_left=True)
+    summary = f'<p class="muted" style="margin-top:12px;">Summary: {len(report["rows"])} groups, {len(report["functions"])} functions</p>'
+    html += card(chr(9670) + " Report Data", table_html + summary, chr(9670), theme)
+
+    html += page_end()
     return html
 
 
