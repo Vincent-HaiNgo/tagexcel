@@ -7,6 +7,16 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from utils.chart_utils import fig_to_b64
+from utils.html_templates import (
+    page_start,
+    page_end,
+    stat_box,
+    stat_box_row,
+    card,
+    section_header,
+    alert_row,
+    timestamp_label,
+)
 
 
 def _detect_roles(df):
@@ -191,43 +201,36 @@ def compute_dashboard(df):
     }
 
 
-def render_dashboard_html(data, df):
+def render_dashboard_html(data, df, theme="light"):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ov = data["overview"]
     rev = data["revenue"]
     alerts = data["alerts"]
 
-    html = f"""<!DOCTYPE html>
-<html><head><meta charset="utf-8"><style>
-body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 12px; }}
-h2 {{ border-bottom: 2px solid #4db6ac; padding-bottom: 4px; }}
-h3 {{ border-bottom: 1px solid #80cbc4; padding-bottom: 2px; margin-top: 20px; }}
-.card {{ display: inline-block; background: #00897b; color: white; padding: 10px 14px; margin: 4px; border-radius: 6px; min-width: 90px; text-align: center; }}
-.card .val {{ font-size: 20px; font-weight: bold; }}
-.card .lbl {{ font-size: 10px; opacity: 0.9; }}
-.alert {{ background: rgba(243,156,18,0.15); border-left: 4px solid #f39c12; padding: 6px 10px; margin: 4px 0; font-size: 12px; border-radius: 3px; }}
-</style></head><body>
-<h2>Business Dashboard</h2>
-<p style="opacity:0.6;font-size:12px;">Generated: {ts} | df-working</p>
-"""
+    html = page_start("Business Dashboard", theme)
+    html += f"<h2>{chr(9670)} Business Dashboard</h2>"
+    html += timestamp_label(ts)
 
-    html += "<h3>Overview</h3><div>"
-    html += f"<div class='card'><div class='val'>{ov['rows']:,}</div><div class='lbl'>Rows</div></div>"
-    html += f"<div class='card'><div class='val'>{ov['columns']}</div><div class='lbl'>Columns</div></div>"
-    html += f"<div class='card'><div class='val'>{ov['missing_pct']}%</div><div class='lbl'>Missing</div></div>"
-    html += f"<div class='card'><div class='val'>{ov['dupes_pct']}%</div><div class='lbl'>Duplicates</div></div>"
-    html += "</div>"
+    ov_missing_color = "green" if ov["missing_pct"] < 5 else ("orange" if ov["missing_pct"] < 20 else "red")
+    ov_dupes_color = "green" if ov["dupes_pct"] < 1 else ("orange" if ov["dupes_pct"] < 5 else "red")
+
+    boxes = ""
+    boxes += stat_box(f"{ov['rows']:,}", "Rows", "teal", chr(9670), theme)
+    boxes += stat_box(str(ov["columns"]), "Columns", "blue", chr(9671), theme)
+    boxes += stat_box(f"{ov['missing_pct']}%", "Missing", ov_missing_color, chr(9650), theme)
+    boxes += stat_box(f"{ov['dupes_pct']}%", "Duplicates", ov_dupes_color, chr(9670), theme)
+    html += card(f"{chr(9670)} Overview", stat_box_row(boxes, theme), chr(9670), theme)
 
     if rev["total"] is not None:
-        html += "<h3>Revenue Summary</h3><div>"
-        html += f"<div class='card'><div class='val'>{rev['total']:,.0f}</div><div class='lbl'>Total</div></div>"
-        html += f"<div class='card'><div class='val'>{rev['average']:,.0f}</div><div class='lbl'>Average</div></div>"
-        html += f"<div class='card'><div class='val'>{rev['transactions']:,}</div><div class='lbl'>Transactions</div></div>"
+        boxes = ""
+        boxes += stat_box(f"{rev['total']:,.0f}", "Total", "teal", chr(9670), theme)
+        boxes += stat_box(f"{rev['average']:,.0f}", "Average", "green", chr(9679), theme)
+        boxes += stat_box(f"{rev['transactions']:,}", "Transactions", "blue", chr(9671), theme)
         if rev["period_growth"] is not None:
-            color = "#27ae60" if rev["period_growth"] >= 0 else "#e74c3c"
-            arrow = "&#9650;" if rev["period_growth"] >= 0 else "&#9660;"
-            html += f"<div class='card' style='background:{color};'><div class='val'>{arrow} {abs(rev['period_growth'])}%</div><div class='lbl'>vs Prev</div></div>"
-        html += "</div>"
+            gcolor = "green" if rev["period_growth"] >= 0 else "red"
+            arrow = chr(9650) if rev["period_growth"] >= 0 else chr(9660)
+            boxes += stat_box(f"{arrow} {abs(rev['period_growth'])}%", "vs Prev", gcolor, arrow, theme)
+        html += card(f"{chr(9679)} Revenue Summary", stat_box_row(boxes, theme), chr(9679), theme)
 
     revenue_cols = rev["columns"]
     date_cols = [c for c, r in data["roles"].items() if r == "date"]
@@ -236,20 +239,24 @@ h3 {{ border-bottom: 1px solid #80cbc4; padding-bottom: 2px; margin-top: 20px; }
     if revenue_cols and date_cols:
         img = _chart_revenue_trend(df, revenue_cols[0], date_cols[0])
         if img:
-            html += f"<h3>Revenue Trend</h3><img src='{img}' style='max-width:100%;'>"
+            html += section_header("Revenue Trend", chr(9632), theme)
+            html += card(f"{chr(9632)} Revenue Trend", f'<img src="{img}" style="max-width:100%;">', chr(9632), theme)
 
     main_rev = revenue_cols[0] if revenue_cols else None
     if dim_cols:
-        html += "<h3>Top Categories</h3>"
+        html += section_header("Top Categories", chr(9632), theme)
+        charts_body = ""
         for dc in dim_cols[:4]:
             img = _chart_top_categories(df, dc, revenue_col=main_rev)
             if img:
-                html += f"<img src='{img}' style='max-width:49%;display:inline-block;'>"
+                charts_body += f'<img src="{img}" style="max-width:49%;display:inline-block;vertical-align:top;">'
+        if charts_body:
+            html += card(f"{chr(9632)} Top Categories", charts_body, chr(9632), theme)
 
     if alerts:
-        html += "<h3>Alerts</h3>"
+        html += section_header("Alerts", chr(9650), theme)
         for a in alerts:
-            html += f"<div class='alert'>&#9888; {a}</div>"
+            html += alert_row(a, "warn")
 
-    html += "</body></html>"
+    html += page_end()
     return html
