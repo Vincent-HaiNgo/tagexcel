@@ -14,6 +14,7 @@ from utils.i18n import tr, get_language
 from utils.export_utils import export_dataframe
 from gui.table_view import PaginatedTableView
 from gui.log_view import LogView
+from utils.status_utils import StatusHelper
 
 
 class ParsingTab(QWidget):
@@ -29,11 +30,11 @@ class ParsingTab(QWidget):
         btn_layout = QHBoxLayout()
         self._btn_app_parse = QPushButton(tr("btn_app_parsing"))
         self._btn_ai_parse = QPushButton(tr("btn_ai_parsing"))
-        self._status_label = QLabel("")
-        self._status_label.setStyleSheet("color: #e67e22; font-weight: bold;")
+        self._lbl_status = QLabel("")
+        self._status = StatusHelper(self._lbl_status)
         btn_layout.addWidget(self._btn_app_parse)
         btn_layout.addWidget(self._btn_ai_parse)
-        btn_layout.addWidget(self._status_label)
+        btn_layout.addWidget(self._lbl_status)
         btn_layout.addStretch()
         self._btn_export = QPushButton(tr("btn_export"))
         btn_layout.addWidget(self._btn_export)
@@ -66,18 +67,10 @@ class ParsingTab(QWidget):
         return True
 
     def _start_busy(self, task_key):
-        self._busy = True
-        self._btn_app_parse.setEnabled(False)
-        self._btn_ai_parse.setEnabled(False)
-        self._status_label.setText(
-            tr("msg_busy_parsing").format(task=tr(task_key))
-        )
+        self._status.working(tr("msg_status_working"))
 
     def _end_busy(self):
-        self._busy = False
-        self._btn_app_parse.setEnabled(True)
-        self._btn_ai_parse.setEnabled(True)
-        self._status_label.setText("")
+        self._status.done(tr("msg_status_done"))
 
     def _flush_ui(self):
         QApplication.processEvents()
@@ -106,6 +99,7 @@ class ParsingTab(QWidget):
             self._log_view.append("--- App Parsing complete ---")
         except Exception as e:
             self._log_view.append(f"ERROR: {str(e)}")
+            self._status.error(f"Error: {str(e)}")
         finally:
             self._flush_ui()
             self._end_busy()
@@ -147,6 +141,7 @@ class ParsingTab(QWidget):
             self._log_view.append(
                 f"ERROR: {tr('msg_ai_fail')} ({str(e)})"
             )
+            self._status.error(f"Error: {str(e)}")
             QMessageBox.warning(self, "tagexcel", tr("msg_ai_fail"))
             self._flush_ui()
             self._end_busy()
@@ -158,6 +153,7 @@ class ParsingTab(QWidget):
             self._log_view.append(
                 f"ERROR: {tr('msg_ai_bad_json')} ({str(e)})"
             )
+            self._status.error(f"Error: {str(e)}")
             QMessageBox.warning(self, "tagexcel", tr("msg_ai_bad_json"))
             self._flush_ui()
             self._end_busy()
