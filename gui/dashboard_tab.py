@@ -7,9 +7,11 @@ from PyQt6.QtWidgets import (
     QApplication,
 )
 from PyQt6.QtCore import Qt, QSettings
+from PyQt6.QtWidgets import QLabel
 
 from utils.i18n import tr
 from utils.export_utils import save_html_file
+from utils.status_utils import StatusHelper
 from core.dashboard_engine import compute_dashboard, render_dashboard_html
 
 
@@ -29,6 +31,11 @@ class DashboardTab(QWidget):
         row1.addStretch()
         row1.addWidget(self._btn_export)
         layout.addLayout(row1)
+
+        self._lbl_status = QLabel("")
+        layout.addWidget(self._lbl_status)
+
+        self._status = StatusHelper(self._lbl_status)
 
         self._output = QTextEdit()
         self._output.setReadOnly(True)
@@ -60,6 +67,7 @@ class DashboardTab(QWidget):
             return
 
         self._btn_refresh.setEnabled(False)
+        self._status.working(tr("msg_status_working"))
         QApplication.processEvents()
 
         try:
@@ -69,10 +77,12 @@ class DashboardTab(QWidget):
             self._output.setHtml(html)
             self._has_output = True
             self._btn_export.setEnabled(True)
+            self._status.done(tr("msg_status_done"))
         except Exception as e:
             self._output.setHtml(
                 f"<p style='color:#e74c3c;'>Error generating dashboard: {str(e)}</p>"
             )
+            self._status.error(f"Error: {str(e)}")
         finally:
             self._btn_refresh.setEnabled(True)
 

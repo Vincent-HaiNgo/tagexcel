@@ -6,11 +6,13 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QLabel,
     QMessageBox,
+    QApplication,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
 from utils.i18n import tr
+from utils.status_utils import StatusHelper
 from utils.config import SUPPORTED_EXTENSIONS
 from gui.table_view import PaginatedTableView
 from gui.dialogs import RemoveFilesDialog
@@ -49,6 +51,11 @@ class FilesTab(QWidget):
         self._info_label.setFont(font)
         self._info_label.setContentsMargins(4, 4, 4, 4)
 
+        self._lbl_status = QLabel("")
+        layout.addWidget(self._lbl_status)
+
+        self._status = StatusHelper(self._lbl_status)
+
         self._table = PaginatedTableView()
 
         layout.addLayout(btn_layout)
@@ -80,10 +87,14 @@ class FilesTab(QWidget):
             QMessageBox.warning(self, "tagexcel", tr("msg_unsupported_format"))
             return
 
+        self._status.working(tr("msg_status_working"))
+        QApplication.processEvents()
         try:
             self._data_manager.add_file(path)
             self._refresh()
+            self._status.done(tr("msg_status_done"))
         except Exception as e:
+            self._status.error(f"Error: {str(e)}")
             QMessageBox.critical(
                 self, "tagexcel", f"Failed to load file:\n{str(e)}"
             )
@@ -98,8 +109,14 @@ class FilesTab(QWidget):
                     self, "tagexcel", tr("msg_no_files_selected")
                 )
                 return
-            self._data_manager.remove_files(selected)
-            self._refresh()
+            self._status.working(tr("msg_status_working"))
+            QApplication.processEvents()
+            try:
+                self._data_manager.remove_files(selected)
+                self._refresh()
+                self._status.done(tr("msg_status_done"))
+            except Exception as e:
+                self._status.error(f"Error: {str(e)}")
 
     def _refresh(self):
         d = self._data_manager
