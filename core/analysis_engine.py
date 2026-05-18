@@ -9,6 +9,17 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from utils.chart_utils import fig_to_b64
+from utils.html_templates import (
+    page_start,
+    page_end,
+    stat_box,
+    stat_box_row,
+    card,
+    section_header,
+    styled_table,
+    badge,
+    timestamp_label,
+)
 
 
 _ADMIN_PATTERNS = {
@@ -369,122 +380,118 @@ def _null_badge(pct):
         return f'<span style="color:#e74c3c;font-weight:bold;">{pct}%</span>'
 
 
-def render_statistics_html(stats, df=None):
+def render_statistics_html(stats, df=None, theme="light"):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ov = stats["overview"]
-    html = f"""<!DOCTYPE html>
-<html><head><meta charset="utf-8"><style>
-body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 12px; }}
-h2 {{ border-bottom: 2px solid #4db6ac; padding-bottom: 4px; }}
-h3 {{ border-bottom: 1px solid #80cbc4; margin-top: 20px; padding-bottom: 2px; }}
-table {{ border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px; }}
-th {{ background: #00897b; color: white; padding: 6px 10px; text-align: left; border: 1px solid #00695c; }}
-td {{ padding: 5px 10px; border: 1px solid #999; }}
-tr:nth-child(even) {{ background: rgba(0,137,123,0.08); }}
-.card {{ display: inline-block; background: #00897b; color: white; padding: 10px 16px; margin: 4px; border-radius: 6px; min-width: 100px; text-align: center; }}
-.card .val {{ font-size: 22px; font-weight: bold; }}
-.card .lbl {{ font-size: 11px; opacity: 0.9; }}
-.scroll {{ overflow-x: auto; }}
-</style></head><body>
-<h2>Statistical Analysis Report</h2>
-<p style="opacity:0.6;font-size:12px;">Generated: {ts} | df-working</p>
-
-<h3>Overview</h3>
-<div>
-<div class="card"><div class="val">{ov["rows"]:,}</div><div class="lbl">Rows</div></div>
-<div class="card"><div class="val">{ov["columns"]}</div><div class="lbl">Columns</div></div>
-<div class="card"><div class="val">{ov["memory_kb"]:.0f} KB</div><div class="lbl">Memory</div></div>
-<div class="card"><div class="val">{ov["duplicates"]:,} ({ov["duplicates_pct"]}%)</div><div class="lbl">Duplicates</div></div>
-</div>
-<p>Missing cells: {ov["missing_cells"]:,} ({ov["missing_cells_pct"]}% of all cells)</p>
-
-<h3>Column Types</h3>
-<table><tr><th>Type</th><th>Count</th></tr>"""
     ct = stats["column_types"]
-    for dtype, count in ct.items():
-        html += f"<tr><td>{dtype.capitalize()}</td><td>{count}</td></tr>"
-    html += "</table>"
-
     mp = stats["missing_patterns"]
-    html += "<h3>Missing Patterns</h3>"
+
+    html = page_start("Statistical Analysis Report", theme)
+    html += "<h2>" + chr(9670) + " Statistical Analysis Report</h2>"
+    html += timestamp_label(ts)
+
+    dupes_color = "red" if ov["duplicates"] > 0 else "green"
+    boxes = ""
+    boxes += stat_box(f"{ov['rows']:,}", "Rows", "teal", chr(9670), theme)
+    boxes += stat_box(str(ov["columns"]), "Columns", "blue", chr(9671), theme)
+    boxes += stat_box(f"{ov['memory_kb']:.0f} KB", "Memory", "green", chr(9679), theme)
+    boxes += stat_box(f"{ov['duplicates']:,} ({ov['duplicates_pct']}%)", "Duplicates", dupes_color, chr(9670), theme)
+    html += card(chr(9670) + " Overview", stat_box_row(boxes, theme), chr(9670), theme)
+    html += f'<p class="muted">Missing cells: {ov["missing_cells"]:,} ({ov["missing_cells_pct"]}% of all cells)</p>'
+
+    type_headers = ["Type", "Count"]
+    type_rows = [[dtype.capitalize(), str(count)] for dtype, count in ct.items()]
+    html += card(chr(9671) + " Column Types", styled_table(type_headers, type_rows, theme), chr(9671), theme)
+
+    html += section_header("Missing Patterns", chr(9650), theme)
+    mp_body = ""
     if df is not None:
         missing_img = _chart_missing_bars(stats)
         if missing_img:
-            html += f'<img src="{missing_img}" style="max-width:100%;" alt="Missing data chart"><br>'
+            mp_body += f'<img src="{missing_img}" style="max-width:100%;" alt="Missing data chart"><br>'
     if mp["top_null_columns"]:
-        html += "<p><b>Top columns by null %:</b></p><table><tr><th>Column</th><th>Nulls</th><th>%</th></tr>"
-        for name, cnt, pct in mp["top_null_columns"]:
-            html += f"<tr><td>{name}</td><td>{cnt:,}</td><td>{_null_badge(pct)}</td></tr>"
-        html += "</table>"
+        mp_body += "<p><b>Top columns by null %:</b></p>"
+        nh = ["Column", "Nulls", "%"]
+        nr = [[name, f"{cnt:,}", _null_badge(pct)] for name, cnt, pct in mp["top_null_columns"]]
+        mp_body += styled_table(nh, nr, theme)
     else:
-        html += "<p>No missing values found.</p>"
+        mp_body += "<p>No missing values found.</p>"
     if mp["top_null_rows"]:
-        html += "<p><b>Top rows by null count:</b></p><table><tr><th>Row #</th><th>Nulls</th></tr>"
-        for idx, cnt in mp["top_null_rows"]:
-            html += f"<tr><td>{idx}</td><td>{cnt}</td></tr>"
-        html += "</table>"
+        mp_body += "<p><b>Top rows by null count:</b></p>"
+        rh = ["Row #", "Nulls"]
+        rr = [[str(idx), str(cnt)] for idx, cnt in mp["top_null_rows"]]
+        mp_body += styled_table(rh, rr, theme)
+    html += card(chr(9650) + " Missing Patterns", mp_body, chr(9650), theme)
 
-    html += "<h3>Per-Column Analysis</h3><div class='scroll'><table><tr>"
-    html += "<th>Column</th><th>Dtype</th><th>Nulls</th><th>Null%</th><th>Unique</th><th>Unique%</th>"
-    html += "<th>Min</th><th>Max</th><th>Mean</th><th>Median</th><th>Std</th><th>Q1</th><th>Q3</th><th>IQR</th><th>Skew</th><th>Kurt</th><th>Outliers</th><th>Top Values</th>"
-    html += "</tr>"
+    html += section_header("Per-Column Analysis", chr(9632), theme)
+    col_headers = [
+        "Column", "Dtype", "Nulls", "Null%", "Unique", "Unique%",
+        "Min", "Max", "Mean", "Median", "Std", "Q1", "Q3", "IQR", "Skew", "Kurt", "Outliers", "Top Values",
+    ]
+    col_rows = []
     for c in stats["columns"]:
-        html += "<tr>"
+        row = []
         role = c.get("role", "normal")
         role_badge = ""
         if role in ("id", "code"):
-            role_badge = " <span style='background:#e74c3c;color:white;font-size:9px;padding:1px 5px;border-radius:3px;'>&nbsp;SKIPPED&nbsp;</span>"
+            role_badge = badge("SKIPPED", "red")
         elif role in ("phone", "email"):
-            role_badge = " <span style='background:#e67e22;color:white;font-size:9px;padding:1px 5px;border-radius:3px;'>&nbsp;SKIPPED&nbsp;</span>"
+            role_badge = badge("SKIPPED", "orange")
         elif role == "derived":
-            role_badge = " <span style='background:#8e44ad;color:white;font-size:9px;padding:1px 5px;border-radius:3px;'>&nbsp;DERIVED&nbsp;</span>"
-        html += f"<td><b>{c['name']}</b>{role_badge}</td><td>{c['dtype']}</td>"
-        html += f"<td>{c['null_count']:,}</td><td>{_null_badge(c['null_pct'])}</td>"
-        html += f"<td>{c['unique_count']:,}</td><td>{c['unique_pct']}%</td>"
+            role_badge = badge("DERIVED", "purple")
+        row.append(f"<b>{c['name']}</b>{role_badge}")
+        row.append(c["dtype"])
+        row.append(f"{c['null_count']:,}")
+        row.append(_null_badge(c["null_pct"]))
+        row.append(f"{c['unique_count']:,}")
+        row.append(f"{c['unique_pct']}%")
         if "numeric" in c:
             n = c["numeric"]
-            html += f"<td>{n['min']}</td><td>{n['max']}</td><td>{n['mean']}</td><td>{n['median']}</td><td>{n['std']}</td>"
-            html += f"<td>{n['q1']}</td><td>{n['q3']}</td><td>{n['iqr']}</td><td>{n['skewness']}</td><td>{n['kurtosis']}</td><td>{n['outliers']}</td>"
+            row += [str(n["min"]), str(n["max"]), str(n["mean"]), str(n["median"]), str(n["std"]),
+                    str(n["q1"]), str(n["q3"]), str(n["iqr"]), str(n["skewness"]), str(n["kurtosis"]), str(n["outliers"])]
         else:
-            html += "<td>-</td>" * 11
+            row += ["-"] * 11
         if "text" in c:
             tv = c["text"]
             top_str = "<br>".join(f"{k}: {v}" for k, v in tv["top_values"])
-            html += f"<td style='font-size:11px;'>{top_str}</td>"
+            row.append(f'<span style="font-size:11px;">{top_str}</span>')
         else:
-            html += "<td>-</td>"
-        html += "</tr>"
-    html += "</table></div>"
+            row.append("-")
+        col_rows.append(row)
+    html += card(chr(9632) + " Per-Column Analysis", styled_table(col_headers, col_rows, theme), chr(9632), theme)
 
     if df is not None:
         num_cols = [c for c in stats["columns"] if "numeric" in c]
         if num_cols:
-            html += "<h3>Numeric Distributions</h3>"
+            html += section_header("Numeric Distributions", chr(9632), theme)
+            dist_body = ""
             for c in num_cols[:6]:
                 cname = c["name"]
                 img = _chart_histogram(df[cname], cname)
                 if img:
-                    html += f'<img src="{img}" style="max-width:100%;margin:4px 0;" alt="Histogram of {cname}"><br>'
+                    dist_body += f'<img src="{img}" style="max-width:100%;margin:4px 0;" alt="Histogram of {cname}"><br>'
+            if dist_body:
+                html += card(chr(9632) + " Numeric Distributions", dist_body, chr(9632), theme)
 
     corr = stats["correlation"]
     if corr and corr["columns"]:
+        corr_body = ""
         if df is not None:
             heat_img = _chart_correlation_heatmap(corr)
             if heat_img:
-                html += f'<h3>Correlation Heatmap</h3><img src="{heat_img}" style="max-width:100%;" alt="Correlation heatmap">'
-        html += "<h3>Correlation Matrix</h3><div class='scroll'><table><tr><th></th>"
-        for col in corr["columns"]:
-            html += f"<th style='font-size:11px;'>{col}</th>"
-        html += "</tr>"
+                corr_body += f'<img src="{heat_img}" style="max-width:100%;" alt="Correlation heatmap"><br><br>'
+        corr_headers = [""] + corr["columns"]
+        corr_rows = []
         for i, row in enumerate(corr["matrix"]):
-            html += f"<tr><td><b>{corr['columns'][i]}</b></td>"
+            r = [f"<b>{corr['columns'][i]}</b>"]
             for val in row:
-                color = _corr_color(val)
-                html += f"<td style='background:{color};text-align:center;font-size:12px;'>{val}</td>"
-            html += "</tr>"
-        html += "</table></div>"
+                bg = _corr_color(val)
+                r.append(f'<span style="display:block;background:{bg};text-align:center;padding:2px 4px;">{val}</span>')
+            corr_rows.append(r)
+        corr_body += styled_table(corr_headers, corr_rows, theme, first_col_left=True)
+        html += card(chr(9670) + " Correlation Heatmap", corr_body, chr(9670), theme)
 
-    html += "</body></html>"
+    html += page_end()
     return html
 
 
