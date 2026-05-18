@@ -111,7 +111,7 @@ def styled_table(headers, rows, theme, first_col_left=False):
         style = ""
         if first_col_left and i == 0:
             style = ' style="text-align: left;"'
-        html += f'<th class="tst-th"{style}>{escape(h)}</th>'
+        html += f'<th class="tst-th"{style}>{h}</th>'
     html += "</tr>"
     for row in rows:
         html += "<tr>"
@@ -119,7 +119,7 @@ def styled_table(headers, rows, theme, first_col_left=False):
             style = ""
             if first_col_left and j == 0:
                 style = ' style="text-align: left;font-weight: bold;"'
-            html += f'<td class="tst-td"{style}>{escape(str(cell))}</td>'
+            html += f'<td class="tst-td"{style}>{cell}</td>'
         html += "</tr>"
     html += "</table></div>"
     return html
