@@ -6,6 +6,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from core.parser_engine import _to_datetime_safe
+
 from utils.chart_utils import fig_to_b64
 from utils.html_templates import (
     page_start,
@@ -72,7 +74,7 @@ def _detect_roles(df):
 def _group_by_month(df, date_col, value_col):
     try:
         ddf = df.dropna(subset=[value_col, date_col]).copy()
-        ddf[date_col] = pd.to_datetime(ddf[date_col], errors="coerce")
+        ddf[date_col] = _to_datetime_safe(ddf[date_col], errors="coerce")
         ddf = ddf.dropna(subset=[date_col]).sort_values(date_col)
         ddf["period"] = ddf[date_col].dt.to_period("M")
         grouped = ddf.groupby("period")[value_col].sum().tail(12)

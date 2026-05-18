@@ -91,3 +91,5 @@ class DashboardTab(QWidget):
 
     def refresh(self):
         self._refresh_ui()
+        if self._data_manager.df_working is not None:
+            self._on_refresh()

@@ -188,6 +188,8 @@ class MainWindow(QMainWindow):
                 "QPushButton:pressed { background-color: #00695c; } "
                 "QComboBox QAbstractItemView { selection-background-color: #2a82da; selection-color: white; }"
                 "QLabel#infoStatus { font-weight: bold; color: #00FA9A; }"
+                "QTabBar::tab { padding: 8px 16px; color: #999; }"
+                "QTabBar::tab:selected { background-color: #00897b; color: white; font-weight: bold; }"
             )
         else:
             palette = QPalette()
@@ -239,6 +241,8 @@ class MainWindow(QMainWindow):
                 "QPushButton:pressed { background-color: #00695c; } "
                 "QComboBox QAbstractItemView { selection-background-color: #2a82da; selection-color: white; }"
                 "QLabel#infoStatus { font-weight: bold; color: #00897b; }"
+                "QTabBar::tab { padding: 8px 16px; color: #666; }"
+                "QTabBar::tab:selected { background-color: #00897b; color: white; font-weight: bold; }"
             )
 
         self._update_logo()

@@ -30,8 +30,11 @@ class CleanupTab(QWidget):
         row1 = QHBoxLayout()
         self._btn_check_dup = QPushButton(tr("btn_check_duplication"))
         self._lbl_dup_info = QLabel("")
+        self._lbl_status = QLabel("")
+        self._status = StatusHelper(self._lbl_status)
         row1.addWidget(self._btn_check_dup)
         row1.addWidget(self._lbl_dup_info)
+        row1.addWidget(self._lbl_status)
         row1.addStretch()
         self._btn_export = QPushButton(tr("btn_export"))
         row1.addWidget(self._btn_export)
@@ -44,11 +47,6 @@ class CleanupTab(QWidget):
         row2.addWidget(self._btn_delete)
         row2.addWidget(self._btn_undo)
         row2.addStretch()
-
-        self._lbl_status = QLabel("")
-        layout.addWidget(self._lbl_status)
-
-        self._status = StatusHelper(self._lbl_status)
 
         # --- Splitter: two tables ---
         splitter = QSplitter(Qt.Orientation.Vertical)

@@ -70,16 +70,14 @@ class JoinTab(QWidget):
         self._lbl_left_col = QLabel(tr("lbl_left_column"))
         self._cmb_left_col = QComboBox()
         left_row.addWidget(self._lbl_left_col)
-        left_row.addWidget(self._cmb_left_col)
-        left_row.addStretch()
+        left_row.addWidget(self._cmb_left_col, 1)
         join_col.addLayout(left_row)
 
         right_row = QHBoxLayout()
         self._lbl_right_col = QLabel(tr("lbl_right_column"))
         self._cmb_right_col = QComboBox()
         right_row.addWidget(self._lbl_right_col)
-        right_row.addWidget(self._cmb_right_col)
-        right_row.addStretch()
+        right_row.addWidget(self._cmb_right_col, 1)
         join_col.addLayout(right_row)
 
         merge_row = QHBoxLayout()

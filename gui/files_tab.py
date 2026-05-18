@@ -28,6 +28,8 @@ class FilesTab(QWidget):
         btn_layout = QHBoxLayout()
         self._btn_add = QPushButton(tr("btn_add_file"))
         self._btn_remove = QPushButton(tr("btn_remove_files"))
+        self._lbl_status = QLabel("")
+        self._status = StatusHelper(self._lbl_status)
         self._btn_exit = QPushButton(tr("btn_exit_app"))
         self._btn_exit.setStyleSheet(
             "QPushButton { background-color: #c0392b; color: white; font-weight: bold; "
@@ -38,6 +40,7 @@ class FilesTab(QWidget):
 
         btn_layout.addWidget(self._btn_add)
         btn_layout.addWidget(self._btn_remove)
+        btn_layout.addWidget(self._lbl_status)
         btn_layout.addStretch()
         btn_layout.addWidget(self._btn_exit)
 
@@ -50,11 +53,6 @@ class FilesTab(QWidget):
         font.setPointSize(11)
         self._info_label.setFont(font)
         self._info_label.setContentsMargins(4, 4, 4, 4)
-
-        self._lbl_status = QLabel("")
-        layout.addWidget(self._lbl_status)
-
-        self._status = StatusHelper(self._lbl_status)
 
         self._table = PaginatedTableView()
 

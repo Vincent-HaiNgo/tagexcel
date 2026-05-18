@@ -1,9 +1,20 @@
 import unicodedata
 import re
+import warnings
 from typing import Tuple, List
 
 import pandas as pd
 import numpy as np
+
+
+def _to_datetime_safe(series, **kwargs):
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="Could not infer format",
+            category=UserWarning,
+        )
+        return pd.to_datetime(series, **kwargs)
 
 SENTINELS = ["N/A", "n/a", "-", "null", "NULL", "None", "none", "", "nan", "NaN"]
 
@@ -140,7 +151,7 @@ class ParserEngine:
 
     def _parse_dates(self, series):
         try:
-            dates = pd.to_datetime(series, errors="coerce")
+            dates = _to_datetime_safe(series, errors="coerce")
             if dates.notna().sum() > 0:
                 return dates
         except Exception:
@@ -187,7 +198,7 @@ class ParserEngine:
                 if dtype in ("int", "float", "numeric"):
                     df[col] = pd.to_numeric(df[col], errors="coerce")
                 elif dtype == "datetime":
-                    df[col] = pd.to_datetime(df[col], errors="coerce")
+                    df[col] = _to_datetime_safe(df[col], errors="coerce")
                 log.append(f"[AI Plan] Coerced '{col}' to {dtype}")
 
             elif op == "normalize_text":
@@ -197,7 +208,7 @@ class ParserEngine:
                 log.append(f"[AI Plan] Normalized text in '{col}'")
 
             elif op == "parse_dates":
-                df[col] = pd.to_datetime(df[col], errors="coerce")
+                df[col] = _to_datetime_safe(df[col], errors="coerce")
                 log.append(f"[AI Plan] Parsed dates in '{col}'")
 
             elif op == "drop_column":

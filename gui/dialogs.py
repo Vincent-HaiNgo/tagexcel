@@ -661,9 +661,13 @@ class ReportDialog(QDialog):
 
         btn_row = QHBoxLayout()
         self._btn_ai_suggest = QPushButton(tr("btn_ai_suggest_pivot"))
+        self._lbl_ai_status = QLabel("")
+        self._lbl_ai_status.setStyleSheet("color: #e67e22; font-weight: bold; font-size: 11px;")
+        self._lbl_ai_status.setWordWrap(True)
         self._btn_app_report = QPushButton(tr("btn_app_report"))
         self._btn_ai_report = QPushButton(tr("btn_ai_report"))
         btn_row.addWidget(self._btn_ai_suggest)
+        btn_row.addWidget(self._lbl_ai_status)
         btn_row.addStretch()
         btn_row.addWidget(self._btn_app_report)
         btn_row.addWidget(self._btn_ai_report)
@@ -677,6 +681,10 @@ class ReportDialog(QDialog):
         self._btn_app_report.clicked.connect(lambda: self._finish("app"))
         self._btn_ai_report.clicked.connect(lambda: self._finish("ai"))
         self._btn_cancel.clicked.connect(self.reject)
+
+        if not self._ai_client or not self._ai_client.is_configured:
+            self._btn_ai_suggest.setVisible(False)
+            self._lbl_ai_status.setVisible(False)
 
     def _add_selected(self):
         existing = {self._selected.item(i).text() for i in range(self._selected.count())}
@@ -719,6 +727,8 @@ class ReportDialog(QDialog):
             QMessageBox.warning(self, "tagexcel", tr("msg_ai_join_not_configured"))
             return
 
+        self._btn_ai_suggest.setEnabled(False)
+        self._lbl_ai_status.setText(tr("msg_ai_suggest_thinking"))
         QApplication.processEvents()
 
         df = self._df
@@ -805,8 +815,10 @@ class ReportDialog(QDialog):
                 idx = self._cmb_group.findText(gb)
                 if idx >= 0:
                     self._cmb_group.setCurrentIndex(idx)
+            self._lbl_ai_status.setText("")
         except Exception as e:
-            QMessageBox.warning(
-                self, "tagexcel",
+            self._lbl_ai_status.setText(
                 tr("msg_ai_suggest_error").format(error=str(e))
             )
+        finally:
+            self._btn_ai_suggest.setEnabled(True)
