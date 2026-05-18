@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 from utils.i18n import tr
+from utils.status_utils import StatusHelper
 from utils.config import MAX_PIVOT_CELLS
 from utils.export_utils import export_dataframe
 from gui.table_view import PaginatedTableView
@@ -33,9 +34,7 @@ class PivotTab(QWidget):
         row1 = QHBoxLayout()
         self._btn_create = QPushButton(tr("btn_create_pivot"))
         self._lbl_status = QLabel("")
-        self._lbl_status.setStyleSheet(
-            "QLabel { color: #e74c3c; font-weight: bold; }"
-        )
+        self._status = StatusHelper(self._lbl_status)
         row1.addWidget(self._btn_create)
         row1.addWidget(self._lbl_status)
         row1.addStretch()
@@ -67,15 +66,11 @@ class PivotTab(QWidget):
         self._btn_create.setEnabled(has_data)
         self._btn_export.setEnabled(self._pivot_result is not None)
         if not has_data:
-            self._lbl_status.setStyleSheet(
-                "QLabel { color: #e74c3c; font-weight: bold; }"
-            )
-            self._lbl_status.setText(tr("msg_pivot_no_df"))
+            self._status.error(tr("msg_pivot_no_df"))
             self._table.set_dataframe(None)
             self._filter_widget.setVisible(False)
         else:
-            self._lbl_status.setStyleSheet("")
-            self._lbl_status.setText("")
+            self._status.clear()
             if self._pivot_result is not None:
                 self._table.set_dataframe(
                     self._pivot_result, name="Pivot Table"
@@ -95,10 +90,7 @@ class PivotTab(QWidget):
 
         config = dlg.get_config()
 
-        self._lbl_status.setStyleSheet(
-            "QLabel { color: #e74c3c; font-weight: bold; }"
-        )
-        self._lbl_status.setText(tr("msg_pivot_working"))
+        self._status.working(tr("msg_status_working"))
         self._btn_create.setEnabled(False)
         self._btn_export.setEnabled(False)
         QApplication.processEvents()
@@ -110,26 +102,17 @@ class PivotTab(QWidget):
             self._pivot_source = df.copy()
             self._table.set_dataframe(result, name="Pivot Table")
             self._setup_filter_bar()
-            self._lbl_status.setStyleSheet(
-                "QLabel { color: #27ae60; font-weight: bold; }"
-            )
             self._btn_export.setEnabled(True)
             if len(result) == 0:
-                self._lbl_status.setText(tr("msg_pivot_empty"))
+                self._status.done(tr("msg_pivot_empty"))
             else:
-                self._lbl_status.setText(
+                self._status.done(
                     f"Pivot: {len(result)} rows, {len(result.columns)} cols"
                 )
         except ValueError as e:
-            self._lbl_status.setStyleSheet(
-                "QLabel { color: #e74c3c; font-weight: bold; }"
-            )
-            self._lbl_status.setText(str(e))
+            self._status.error(str(e))
         except Exception as e:
-            self._lbl_status.setStyleSheet(
-                "QLabel { color: #e74c3c; font-weight: bold; }"
-            )
-            self._lbl_status.setText(
+            self._status.error(
                 tr("msg_pivot_error").format(error=str(e))
             )
         finally:
@@ -262,16 +245,13 @@ class PivotTab(QWidget):
             self._pivot_result = result
             self._table.set_dataframe(result, name="Pivot Table")
             if len(result) == 0:
-                self._lbl_status.setText(tr("msg_pivot_empty"))
+                self._status.done(tr("msg_pivot_empty"))
             else:
-                self._lbl_status.setText(
+                self._status.done(
                     f"Pivot: {len(result)} rows, {len(result.columns)} cols"
                 )
         except Exception:
-            self._lbl_status.setStyleSheet(
-                "QLabel { color: #e74c3c; font-weight: bold; }"
-            )
-            self._lbl_status.setText(tr("msg_pivot_empty"))
+            self._status.error(tr("msg_pivot_empty"))
 
     def _on_export(self):
         if self._pivot_result is not None:

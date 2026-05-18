@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 from utils.i18n import tr
+from utils.status_utils import StatusHelper
 from utils.export_utils import export_dataframe
 from gui.table_view import PaginatedTableView
 from gui.dialogs import DeleteDialog
@@ -43,6 +44,11 @@ class CleanupTab(QWidget):
         row2.addWidget(self._btn_delete)
         row2.addWidget(self._btn_undo)
         row2.addStretch()
+
+        self._lbl_status = QLabel("")
+        layout.addWidget(self._lbl_status)
+
+        self._status = StatusHelper(self._lbl_status)
 
         # --- Splitter: two tables ---
         splitter = QSplitter(Qt.Orientation.Vertical)
@@ -158,49 +164,62 @@ class CleanupTab(QWidget):
         if dlg.exec() != DeleteDialog.DialogCode.Accepted:
             return
 
-        options = dlg.get_options()
+        self._status.working(tr("msg_status_working"))
+        QApplication.processEvents()
+        try:
+            options = dlg.get_options()
 
-        if self._df_before_delete is None:
-            self._df_before_delete = self._data_manager.df_working.copy()
-            self._backup_active_file = self._data_manager.active_file
+            if self._df_before_delete is None:
+                self._df_before_delete = self._data_manager.df_working.copy()
+                self._backup_active_file = self._data_manager.active_file
 
-        df = self._data_manager.df_working.copy()
+            df = self._data_manager.df_working.copy()
 
-        if options["cols_input"]:
-            col_names = [
-                c.strip()
-                for c in options["cols_input"].split(",")
-                if c.strip()
-            ]
-            existing = [c for c in col_names if c in df.columns]
-            if existing:
-                df = df.drop(columns=existing, errors="ignore")
-        if options["null_cols"]:
-            df = df.dropna(axis=1, how="all")
-        if options["rows_input"]:
-            row_indices = self._parse_row_input(
-                options["rows_input"], len(df)
-            )
-            if row_indices:
-                df = df.drop(index=df.index[row_indices], errors="ignore")
-        if options["null_rows"]:
-            df = df.dropna(how="all")
-        if options["dup_rows"]:
-            df = df.drop_duplicates()
+            if options["cols_input"]:
+                col_names = [
+                    c.strip()
+                    for c in options["cols_input"].split(",")
+                    if c.strip()
+                ]
+                existing = [c for c in col_names if c in df.columns]
+                if existing:
+                    df = df.drop(columns=existing, errors="ignore")
+            if options["null_cols"]:
+                df = df.dropna(axis=1, how="all")
+            if options["rows_input"]:
+                row_indices = self._parse_row_input(
+                    options["rows_input"], len(df)
+                )
+                if row_indices:
+                    df = df.drop(index=df.index[row_indices], errors="ignore")
+            if options["null_rows"]:
+                df = df.dropna(how="all")
+            if options["dup_rows"]:
+                df = df.drop_duplicates()
 
-        self._data_manager.update_working(df)
-        self._btn_undo.setEnabled(True)
-        self._refresh_ui()
+            self._data_manager.update_working(df)
+            self._btn_undo.setEnabled(True)
+            self._refresh_ui()
+            self._status.done(tr("msg_status_done"))
+        except Exception as e:
+            self._status.error(f"Error: {str(e)}")
 
     def _on_undo(self):
         if self._df_before_delete is None:
             QMessageBox.information(self, "tagexcel", tr("msg_no_backup"))
             return
-        self._data_manager.update_working(self._df_before_delete.copy())
-        self._df_before_delete = None
-        self._backup_active_file = None
-        self._btn_undo.setEnabled(False)
-        self._refresh_ui()
+
+        self._status.working(tr("msg_status_working"))
+        QApplication.processEvents()
+        try:
+            self._data_manager.update_working(self._df_before_delete.copy())
+            self._df_before_delete = None
+            self._backup_active_file = None
+            self._btn_undo.setEnabled(False)
+            self._refresh_ui()
+            self._status.done(tr("msg_status_done"))
+        except Exception as e:
+            self._status.error(f"Error: {str(e)}")
 
     @staticmethod
     def _parse_row_input(text, total_rows):
