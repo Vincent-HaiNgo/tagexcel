@@ -52,6 +52,14 @@ class TestStatBox:
             assert 'class="stat-box' in result
             assert "50" in result
 
+    def test_stat_box_teal_color(self):
+        result = stat_box("100", "Test", "teal", "", "light")
+        assert "background:#00897b" in result
+
+    def test_stat_box_dark(self):
+        result = stat_box("100", "Dark", "teal", "", "dark")
+        assert "stat-box" in result
+
 
 class TestStatBoxRow:
     def test_stat_box_row(self):
@@ -109,6 +117,18 @@ class TestBadge:
         assert "SKIPPED" in result
         assert "badge" in result
         assert "badge-red" in result
+
+
+    def test_badge_purple(self):
+        result = badge("DERIVED", "purple")
+        assert "badge-purple" in result
+
+
+class TestEscaping:
+    def test_escaped_html_chars(self):
+        result = stat_box("<script>", "A & B", "teal", '"', "light")
+        assert "<script>" not in result
+        assert "&lt;script&gt;" in result
 
 
 class TestAlertRow:

@@ -1,4 +1,5 @@
 from datetime import datetime
+from html import escape
 
 
 _LIGHT_CSS = """
@@ -10,7 +11,6 @@ a { color: #00897b; text-decoration: none; }
 .card-header-icon { float: left; margin-right: 8px; font-size: 16px; }
 .card-body { padding: 16px; }
 .stat-box { display: inline-block; vertical-align: top; min-width: 120px; margin: 6px; border-radius: 6px; padding: 14px 16px; color: #ffffff; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-.stat-box-inner { }
 .stat-box-icon { float: right; font-size: 28px; opacity: 0.4; margin-left: 10px; margin-top: 2px; }
 .stat-box-row { margin: 4px 0; }
 .section-h3 { border-left: 4px solid #00897b; padding: 4px 12px; margin: 20px 0 10px 0; font-size: 16px; color: #00897b; }
@@ -37,7 +37,6 @@ a { color: #4db6ac; text-decoration: none; }
 .card-header-icon { float: left; margin-right: 8px; font-size: 16px; }
 .card-body { padding: 16px; }
 .stat-box { display: inline-block; vertical-align: top; min-width: 120px; margin: 6px; border-radius: 6px; padding: 14px 16px; color: #ffffff; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.35); }
-.stat-box-inner { }
 .stat-box-icon { float: right; font-size: 28px; opacity: 0.4; margin-left: 10px; margin-top: 2px; }
 .stat-box-row { margin: 4px 0; }
 .section-h3 { border-left: 4px solid #4db6ac; padding: 4px 12px; margin: 20px 0 10px 0; font-size: 16px; color: #4db6ac; }
@@ -67,25 +66,24 @@ _STAT_COLORS = {
 def page_start(title, theme):
     css = _LIGHT_CSS if theme == "light" else _DARK_CSS
     return f"""<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>{title}</title><style>
+<html><head><meta charset="utf-8"><title>{escape(title)}</title><style>
 {css}
 </style></head><body>
-<div class="body-bg">
 """
 
 
 def page_end():
-    return "</div></body></html>"
+    return "</body></html>"
 
 
 def stat_box(value, label, color, icon_char, theme):
     bg = _STAT_COLORS.get(color, _STAT_COLORS["teal"])
     return (
         f'<div class="stat-box" style="background:{bg};">'
-        f'<span class="stat-box-icon">{icon_char}</span>'
+        f'<span class="stat-box-icon">{escape(icon_char)}</span>'
         f'<div class="stat-box-inner">'
-        f'<div style="font-size:22px;font-weight:bold;">{value}</div>'
-        f'<div style="font-size:12px;opacity:0.9;margin-top:2px;">{label}</div>'
+        f'<div style="font-size:22px;font-weight:bold;">{escape(value)}</div>'
+        f'<div style="font-size:12px;opacity:0.9;margin-top:2px;">{escape(label)}</div>'
         f"</div></div>"
     )
 
@@ -95,16 +93,16 @@ def stat_box_row(boxes_html, theme):
 
 
 def card(header_title, body_html, icon_char, theme):
-    icon_html = f'<span class="card-header-icon">{icon_char}</span>' if icon_char else ""
+    icon_html = f'<span class="card-header-icon">{escape(icon_char)}</span>' if icon_char else ""
     return (
         f'<div class="card"><div class="card-header">'
-        f"{icon_html}{header_title}</div>"
+        f"{icon_html}{escape(header_title)}</div>"
         f'<div class="card-body">{body_html}</div></div>'
     )
 
 
 def section_header(title, icon_char, theme):
-    return f'<h3 class="section-h3">{icon_char} {title}</h3>'
+    return f'<h3 class="section-h3">{escape(icon_char)} {escape(title)}</h3>'
 
 
 def styled_table(headers, rows, theme, first_col_left=False):
@@ -113,7 +111,7 @@ def styled_table(headers, rows, theme, first_col_left=False):
         style = ""
         if first_col_left and i == 0:
             style = ' style="text-align: left;"'
-        html += f'<th class="tst-th"{style}>{h}</th>'
+        html += f'<th class="tst-th"{style}>{escape(h)}</th>'
     html += "</tr>"
     for row in rows:
         html += "<tr>"
@@ -121,7 +119,7 @@ def styled_table(headers, rows, theme, first_col_left=False):
             style = ""
             if first_col_left and j == 0:
                 style = ' style="text-align: left;font-weight: bold;"'
-            html += f'<td class="tst-td"{style}>{cell}</td>'
+            html += f'<td class="tst-td"{style}>{escape(str(cell))}</td>'
         html += "</tr>"
     html += "</table></div>"
     return html
@@ -129,13 +127,13 @@ def styled_table(headers, rows, theme, first_col_left=False):
 
 def badge(text, color):
     color_class = {"red": "badge-red", "orange": "badge-orange", "purple": "badge-purple"}.get(color, "badge-red")
-    return f'<span class="badge {color_class}">&nbsp;{text}&nbsp;</span>'
+    return f'<span class="badge {color_class}">&nbsp;{escape(text)}&nbsp;</span>'
 
 
 def alert_row(message, level):
     cls = "alert-warn" if level == "warn" else "alert-danger"
-    return f'<div class="{cls}">&#9888; {message}</div>'
+    return f'<div class="{cls}">&#9888; {escape(message)}</div>'
 
 
 def timestamp_label(ts):
-    return f'<p class="muted">Generated: {ts} | df-working</p>'
+    return f'<p class="muted">Generated: {escape(ts)} | df-working</p>'
