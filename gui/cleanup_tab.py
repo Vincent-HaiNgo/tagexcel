@@ -16,11 +16,12 @@ from gui.table_view import PaginatedTableView
 from gui.dialogs import DeleteDialog
 
 
-class DeleteTab(QWidget):
+class CleanupTab(QWidget):
     def __init__(self, data_manager, parent=None):
         super().__init__(parent)
         self._data_manager = data_manager
         self._df_before_delete = None
+        self._backup_active_file = None
 
         layout = QVBoxLayout(self)
 
@@ -75,6 +76,11 @@ class DeleteTab(QWidget):
     def _refresh_ui(self):
         has_working = self._data_manager.df_working is not None
         has_backup = self._df_before_delete is not None
+        if has_backup and self._backup_active_file != self._data_manager.active_file:
+            self._df_before_delete = None
+            self._backup_active_file = None
+            self._btn_undo.setEnabled(False)
+            has_backup = False
 
         self._btn_check_dup.setEnabled(has_working)
         self._btn_delete.setEnabled(has_working)
@@ -156,6 +162,7 @@ class DeleteTab(QWidget):
 
         if self._df_before_delete is None:
             self._df_before_delete = self._data_manager.df_working.copy()
+            self._backup_active_file = self._data_manager.active_file
 
         df = self._data_manager.df_working.copy()
 
@@ -191,6 +198,7 @@ class DeleteTab(QWidget):
             return
         self._data_manager.update_working(self._df_before_delete.copy())
         self._df_before_delete = None
+        self._backup_active_file = None
         self._btn_undo.setEnabled(False)
         self._refresh_ui()
 

@@ -15,7 +15,7 @@ from gui.dashboard_tab import DashboardTab
 from gui.files_tab import FilesTab
 from gui.parsing_tab import ParsingTab
 from gui.join_tab import JoinTab
-from gui.delete_tab import DeleteTab
+from gui.cleanup_tab import CleanupTab
 from gui.pivot_tab import PivotTab
 from gui.settings_tab import SettingsTab
 from gui.analysis_tab import AnalysisTab
@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
             data_manager, parser_engine, ai_client
         )
         self._join_tab = JoinTab(data_manager, parser_engine, ai_client)
-        self._delete_tab = DeleteTab(data_manager)
+        self._cleanup_tab = CleanupTab(data_manager)
         self._pivot_tab = PivotTab(data_manager, ai_client)
         self._analysis_tab = AnalysisTab(data_manager, ai_client)
         self._report_tab = ReportTab(data_manager, ai_client)
@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
         self._tabs.addTab(self._files_tab, tr("tab_files"))
         self._tabs.addTab(self._parsing_tab, tr("tab_parsing"))
         self._tabs.addTab(self._join_tab, tr("tab_join"))
-        self._tabs.addTab(self._delete_tab, tr("tab_delete"))
+        self._tabs.addTab(self._cleanup_tab, tr("tab_delete"))
         self._tabs.addTab(self._pivot_tab, tr("tab_pivot"))
         self._tabs.addTab(self._analysis_tab, tr("tab_analysis"))
         self._tabs.addTab(self._report_tab, tr("tab_report"))
@@ -106,7 +106,7 @@ class MainWindow(QMainWindow):
         self._files_tab.retranslate_ui()
         self._parsing_tab.retranslate_ui()
         self._join_tab.retranslate_ui()
-        self._delete_tab.retranslate_ui()
+        self._cleanup_tab.retranslate_ui()
         self._pivot_tab.retranslate_ui()
         self._analysis_tab.retranslate_ui()
         self._report_tab.retranslate_ui()
@@ -122,7 +122,7 @@ class MainWindow(QMainWindow):
         elif index == 3:
             self._join_tab.refresh()
         elif index == 4:
-            self._delete_tab.refresh()
+            self._cleanup_tab.refresh()
         elif index == 5:
             self._pivot_tab.refresh()
         elif index == 6:
