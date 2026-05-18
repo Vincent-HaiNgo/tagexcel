@@ -190,6 +190,8 @@ EN = {
     "lbl_dashboard_trend": "Trend",
     "lbl_dashboard_alerts": "Alerts",
     "btn_refresh": "Refresh",
+    "msg_status_working": "Working on requested task, please wait\u2026",
+    "msg_status_done": "Requested task has been completed.",
 }
 
 VI = {
@@ -383,6 +385,8 @@ VI = {
     "lbl_dashboard_trend": "Xu h\u01b0\u1edbng",
     "lbl_dashboard_alerts": "C\u1ea3nh b\u00e1o",
     "btn_refresh": "L\u00e0m m\u1edbi",
+    "msg_status_working": "\u0110ang th\u1ef1c hi\u1ec7n t\u00e1c v\u1ee5, vui l\u00f2ng ch\u1edd\u2026",
+    "msg_status_done": "T\u00e1c v\u1ee5 \u0111\u00e3 \u0111\u01b0\u1ee3c ho\u00e0n th\u00e0nh.",
 }
 
 
