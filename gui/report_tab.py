@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QApplication,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSettings
 
 from utils.i18n import tr, get_language
 from utils.export_utils import save_html_file
@@ -138,7 +138,8 @@ class ReportTab(QWidget):
                     self._output.setPlainText(content)
             else:
                 report = compute_report(df, config)
-                html = render_report_html(report)
+                theme = QSettings("tagexcel", "tagexcel").value("theme", "light")
+                html = render_report_html(report, theme=theme)
                 self._output.setHtml(html)
 
             self._has_output = True

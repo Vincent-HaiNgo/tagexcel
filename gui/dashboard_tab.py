@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QApplication,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSettings
 
 from utils.i18n import tr
 from utils.export_utils import save_html_file
@@ -64,7 +64,8 @@ class DashboardTab(QWidget):
 
         try:
             data = compute_dashboard(df)
-            html = render_dashboard_html(data, df)
+            theme = QSettings("tagexcel", "tagexcel").value("theme", "light")
+            html = render_dashboard_html(data, df, theme=theme)
             self._output.setHtml(html)
             self._has_output = True
             self._btn_export.setEnabled(True)
