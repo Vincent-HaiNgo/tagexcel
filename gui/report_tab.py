@@ -15,6 +15,7 @@ from PyQt6.QtCore import Qt, QSettings
 
 from utils.i18n import tr, get_language
 from utils.export_utils import save_html_file
+from utils.status_utils import StatusHelper
 from gui.table_view import PaginatedTableView
 from gui.dialogs import ReportDialog
 from core.report_engine import (
@@ -36,7 +37,7 @@ class ReportTab(QWidget):
         row1 = QHBoxLayout()
         self._btn_create = QPushButton(tr("dlg_report_title"))
         self._lbl_status = QLabel("")
-        self._lbl_status.setStyleSheet("color: #e67e22; font-weight: bold;")
+        self._status = StatusHelper(self._lbl_status)
         row1.addWidget(self._btn_create)
         row1.addWidget(self._lbl_status)
         row1.addStretch()
@@ -89,7 +90,7 @@ class ReportTab(QWidget):
         config = dlg.get_config()
         mode = dlg.get_mode()
 
-        self._lbl_status.setText(tr("msg_report_working"))
+        self._status.working(tr("msg_status_working"))
         self._btn_create.setEnabled(False)
         self._btn_export.setEnabled(False)
         QApplication.processEvents()
@@ -144,10 +145,10 @@ class ReportTab(QWidget):
 
             self._has_output = True
             self._btn_export.setEnabled(True)
-            self._lbl_status.setText("")
+            self._status.done(tr("msg_status_done"))
 
         except Exception as e:
-            self._lbl_status.setText(
+            self._status.error(
                 tr("msg_report_ai_fail").format(error=str(e))
             )
         finally:

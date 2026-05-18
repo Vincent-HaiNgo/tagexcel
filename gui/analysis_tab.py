@@ -14,6 +14,7 @@ from PyQt6.QtCore import Qt, QSettings
 
 from utils.i18n import tr, get_language
 from utils.export_utils import save_html_file
+from utils.status_utils import StatusHelper
 from core.analysis_engine import (
     compute_statistics,
     render_statistics_html,
@@ -34,7 +35,7 @@ class AnalysisTab(QWidget):
         self._btn_app_analysis = QPushButton(tr("btn_app_analysis"))
         self._btn_ai_analysis = QPushButton(tr("btn_ai_analysis"))
         self._lbl_status = QLabel("")
-        self._lbl_status.setStyleSheet("color: #e67e22; font-weight: bold;")
+        self._status = StatusHelper(self._lbl_status)
         row1.addWidget(self._btn_app_analysis)
         row1.addWidget(self._btn_ai_analysis)
         row1.addWidget(self._lbl_status)
@@ -75,7 +76,7 @@ class AnalysisTab(QWidget):
             return
 
         self._set_busy(True)
-        self._lbl_status.setText(tr("msg_analysis_working"))
+        self._status.working(tr("msg_status_working"))
         QApplication.processEvents()
 
         try:
@@ -85,9 +86,9 @@ class AnalysisTab(QWidget):
             self._output.setHtml(html)
             self._has_output = True
             self._btn_export.setEnabled(True)
-            self._lbl_status.setText("")
+            self._status.done(tr("msg_status_done"))
         except Exception as e:
-            self._lbl_status.setText(
+            self._status.error(
                 tr("msg_ai_analysis_fail").format(error=str(e))
             )
         finally:
@@ -105,7 +106,7 @@ class AnalysisTab(QWidget):
             return
 
         self._set_busy(True)
-        self._lbl_status.setText(tr("msg_analysis_working"))
+        self._status.working(tr("msg_status_working"))
         QApplication.processEvents()
 
         try:
@@ -150,9 +151,9 @@ class AnalysisTab(QWidget):
                 self._output.setPlainText(content)
             self._has_output = True
             self._btn_export.setEnabled(True)
-            self._lbl_status.setText("")
+            self._status.done(tr("msg_status_done"))
         except Exception as e:
-            self._lbl_status.setText(
+            self._status.error(
                 tr("msg_ai_analysis_fail").format(error=str(e))
             )
         finally:
@@ -166,7 +167,7 @@ class AnalysisTab(QWidget):
         self._btn_ai_analysis.setEnabled(not busy)
         self._btn_export.setEnabled(not busy and self._has_output)
         if not busy:
-            self._lbl_status.setText("")
+            self._status.clear()
 
     def refresh(self):
         self._refresh_ui()
