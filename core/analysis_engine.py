@@ -478,18 +478,21 @@ def render_statistics_html(stats, df=None, theme="light"):
     if df is not None:
         num_cols = [c for c in stats["columns"] if "numeric" in c]
         if num_cols:
-            dist_row = ""
+            dist_chunks = []
             for c in num_cols[:6]:
                 cname = c["name"]
                 img = _chart_histogram(df[cname], cname)
                 if img:
-                    dist_row += col(
-                        f'<img src="{img}" style="max-width:100%;margin:4px 0;" alt="Histogram of {cname}">',
-                        width=6,
+                    dist_chunks.append(
+                        col(f'<img src="{img}" style="max-width:100%;margin:4px 0;" alt="Histogram of {cname}">', width=6)
                     )
-            if dist_row:
+            if dist_chunks:
                 html += section_header("Numeric Distributions", chr(9632), theme)
-                html += card(chr(9632) + " Numeric Distributions", row(dist_row), chr(9632), theme)
+                dist_html = ""
+                for i in range(0, len(dist_chunks), 2):
+                    pair = "".join(dist_chunks[i:i+2])
+                    dist_html += row(pair)
+                html += card(chr(9632) + " Numeric Distributions", dist_html, chr(9632), theme)
 
     corr = stats["correlation"]
     if corr and corr["columns"]:

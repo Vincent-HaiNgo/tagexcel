@@ -6,12 +6,11 @@ _LIGHT_CSS = """
 body { background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 16px; color: #212529; }
 h2 { color: #00897b; font-size: 20px; margin: 0 0 6px 0; padding: 0; }
 a { color: #00897b; text-decoration: none; }
-.row { display: flex; flex-wrap: wrap; margin: 0 -6px; }
-.col-3 { flex: 0 0 25%; max-width: 25%; padding: 0 6px; box-sizing: border-box; }
-.col-4 { flex: 0 0 33.333%; max-width: 33.333%; padding: 0 6px; box-sizing: border-box; }
-.col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 6px; box-sizing: border-box; }
-.col-12 { flex: 0 0 100%; max-width: 100%; padding: 0 6px; box-sizing: border-box; }
-@media (max-width: 768px) { .col-3, .col-4, .col-6 { flex: 0 0 100%; max-width: 100%; } }
+.row { margin-bottom: 4px; }
+.col-3 { display: inline-block; width: 25%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
+.col-4 { display: inline-block; width: 33.333%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
+.col-6 { display: inline-block; width: 50%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
+.col-12 { display: inline-block; width: 100%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
 .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 .card-header { background: #00897b; color: #ffffff; padding: 10px 16px; border-radius: 6px 6px 0 0; font-size: 14px; font-weight: bold; }
 .card-header-icon { float: left; margin-right: 8px; font-size: 16px; }
@@ -39,12 +38,11 @@ _DARK_CSS = """
 body { background-color: #1a1a1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 16px; color: #e0e0e0; }
 h2 { color: #4db6ac; font-size: 20px; margin: 0 0 6px 0; padding: 0; }
 a { color: #4db6ac; text-decoration: none; }
-.row { display: flex; flex-wrap: wrap; margin: 0 -6px; }
-.col-3 { flex: 0 0 25%; max-width: 25%; padding: 0 6px; box-sizing: border-box; }
-.col-4 { flex: 0 0 33.333%; max-width: 33.333%; padding: 0 6px; box-sizing: border-box; }
-.col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 6px; box-sizing: border-box; }
-.col-12 { flex: 0 0 100%; max-width: 100%; padding: 0 6px; box-sizing: border-box; }
-@media (max-width: 768px) { .col-3, .col-4, .col-6 { flex: 0 0 100%; max-width: 100%; } }
+.row { margin-bottom: 4px; }
+.col-3 { display: inline-block; width: 25%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
+.col-4 { display: inline-block; width: 33.333%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
+.col-6 { display: inline-block; width: 50%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
+.col-12 { display: inline-block; width: 100%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
 .card { background: #2d2d2d; border: 1px solid #3d3d3d; border-radius: 6px; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 .card-header { background: #00695c; color: #ffffff; padding: 10px 16px; border-radius: 6px 6px 0 0; font-size: 14px; font-weight: bold; }
 .card-header-icon { float: left; margin-right: 8px; font-size: 16px; }
