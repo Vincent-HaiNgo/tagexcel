@@ -6,11 +6,6 @@ _LIGHT_CSS = """
 body { background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 16px; color: #212529; }
 h2 { color: #00897b; font-size: 20px; margin: 0 0 6px 0; padding: 0; }
 a { color: #00897b; text-decoration: none; }
-.row { margin-bottom: 4px; }
-.col-3 { display: inline-block; width: 25%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
-.col-4 { display: inline-block; width: 33.333%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
-.col-6 { display: inline-block; width: 50%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
-.col-12 { display: inline-block; width: 100%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
 .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 .card-header { background: #00897b; color: #ffffff; padding: 10px 16px; border-radius: 6px 6px 0 0; font-size: 14px; font-weight: bold; }
 .card-header-icon { float: left; margin-right: 8px; font-size: 16px; }
@@ -38,11 +33,6 @@ _DARK_CSS = """
 body { background-color: #1a1a1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 16px; color: #e0e0e0; }
 h2 { color: #4db6ac; font-size: 20px; margin: 0 0 6px 0; padding: 0; }
 a { color: #4db6ac; text-decoration: none; }
-.row { margin-bottom: 4px; }
-.col-3 { display: inline-block; width: 25%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
-.col-4 { display: inline-block; width: 33.333%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
-.col-6 { display: inline-block; width: 50%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
-.col-12 { display: inline-block; width: 100%; padding: 0 6px; box-sizing: border-box; vertical-align: top; }
 .card { background: #2d2d2d; border: 1px solid #3d3d3d; border-radius: 6px; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 .card-header { background: #00695c; color: #ffffff; padding: 10px 16px; border-radius: 6px 6px 0 0; font-size: 14px; font-weight: bold; }
 .card-header-icon { float: left; margin-right: 8px; font-size: 16px; }
@@ -152,8 +142,12 @@ def timestamp_label(ts):
 
 
 def row(content):
-    return f'<div class="row">{content}</div>'
+    return f'<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;"><tr>{content}</tr></table>'
+
+
+_COL_WIDTHS = {3: "25%", 4: "33%", 6: "50%", 12: "100%"}
 
 
 def col(content, width=6):
-    return f'<div class="col-{width}">{content}</div>'
+    w = _COL_WIDTHS.get(width, "50%")
+    return f'<td width="{w}" style="padding:0 6px;vertical-align:top;">{content}</td>'
