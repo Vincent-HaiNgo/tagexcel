@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from core.parser_engine import _to_datetime_safe
 
-from utils.chart_utils import fig_to_b64
+from utils.chart_utils import fig_to_b64, chart_pie
 from utils.html_templates import (
     page_start,
     page_end,
@@ -88,8 +88,10 @@ def _chart_revenue_trend(df, revenue_col, date_col):
         grouped = _group_by_month(df, date_col, revenue_col)
         if grouped is None:
             return ""
-        fig, ax = plt.subplots(figsize=(6, 2.2))
-        ax.bar(range(len(grouped)), grouped.values, color="#00897b", edgecolor="white")
+        fig, ax = plt.subplots(figsize=(6, 2.5))
+        ax.plot(range(len(grouped)), grouped.values, color="#00897b", linewidth=2,
+                marker="o", markersize=5, markerfacecolor="white", markeredgewidth=2)
+        ax.fill_between(range(len(grouped)), grouped.values, alpha=0.15, color="#00897b")
         ax.set_xticks(range(len(grouped)))
         ax.set_xticklabels([str(p) for p in grouped.index], rotation=45, ha="right", fontsize=7)
         ax.set_title(f"{revenue_col} \u2014 Monthly Trend", fontsize=9, fontweight="bold")
@@ -126,6 +128,16 @@ def _chart_top_categories(df, col, revenue_col=None):
         ax.set_title(title, fontsize=9, fontweight="bold")
         ax.tick_params(labelsize=7)
         return fig_to_b64(fig)
+    except Exception:
+        return ""
+
+
+def _chart_category_pie(df, col):
+    try:
+        drop = df[col].dropna().astype(str)
+        if len(drop) == 0:
+            return ""
+        return chart_pie(drop, f"{col} \u2014 Distribution")
     except Exception:
         return ""
 
@@ -275,9 +287,17 @@ def render_dashboard_html(data, df, theme="light"):
             )
 
     main_rev = revenue_cols[0] if revenue_cols else None
+    has_pie = False
     if dim_cols:
+        pie_img = _chart_category_pie(df, dim_cols[0])
+        if pie_img:
+            charts_row += col(
+                card(f"{chr(9679)} Category Distribution", f'<img src="{pie_img}" style="max-width:100%;">', chr(9679), theme),
+                width=6,
+            )
+            has_pie = True
         chart_bodies = ""
-        for dc in dim_cols[:4]:
+        for dc in dim_cols[1:4]:
             img = _chart_top_categories(df, dc, revenue_col=main_rev)
             if img:
                 chart_bodies += f'<img src="{img}" style="max-width:100%;margin:4px 0;">'

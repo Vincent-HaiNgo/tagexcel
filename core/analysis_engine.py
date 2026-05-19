@@ -8,7 +8,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from utils.chart_utils import fig_to_b64
+from utils.chart_utils import fig_to_b64, chart_pie, chart_line, chart_scatter, chart_radar
 from utils.html_templates import (
     page_start,
     page_end,
@@ -512,6 +512,97 @@ def render_statistics_html(stats, df=None, theme="light"):
         corr_body += styled_table(corr_headers, corr_rows, theme, first_col_left=True)
         html += section_header("Correlation Heatmap", chr(9670), theme)
         html += card(chr(9670) + " Correlation Heatmap", corr_body, chr(9670), theme)
+
+    if df is not None:
+        cols_info = stats.get("columns", [])
+
+        text_cols = [c for c in cols_info if c.get("text") and not c.get("numeric") and c.get("unique_count", 999) <= 15]
+        if text_cols:
+            pie_row = ""
+            for tc in text_cols[:4]:
+                cname = tc["name"]
+                pie_img = chart_pie(df[cname].dropna().astype(str), f"{cname}")
+                if pie_img:
+                    pie_row += col(
+                        f'<img src="{pie_img}" style="max-width:100%;" alt="Pie of {cname}">',
+                        width=6,
+                    )
+            if pie_row:
+                html += section_header("Category Distribution", chr(9679), theme)
+                html += card(chr(9679) + " Category Distribution", row(pie_row), chr(9679), theme)
+
+        date_cols_raw = df.select_dtypes(include=["datetime"]).columns.tolist()
+        num_cols_all = [c["name"] for c in cols_info if c.get("numeric")]
+        if date_cols_raw and num_cols_all:
+            trend_row = ""
+            for dc in date_cols_raw[:2]:
+                for nc in num_cols_all[:3]:
+                    try:
+                        sub = df.dropna(subset=[dc, nc])
+                        if len(sub) >= 3:
+                            sub = sub.sort_values(dc)
+                            trend = sub.groupby(sub[dc].dt.to_period("M"))[nc].sum().tail(12)
+                            if len(trend) >= 2:
+                                trend_row += col(
+                                    card(f"{chr(9632)} {nc} over {dc}", f'<img src="{chart_line(trend.index, trend, f"{nc} — Monthly Trend")}" style="max-width:100%;">', chr(9632), theme),
+                                    width=6,
+                                )
+                    except Exception:
+                        continue
+            if trend_row:
+                html += section_header("Trend Analysis", chr(9632), theme)
+                html += card(chr(9632) + " Trend Analysis", row(trend_row), chr(9632), theme)
+
+        num_names = [c["name"] for c in cols_info if c.get("numeric")]
+        if len(num_names) >= 2:
+            scatter_items = []
+            for i in range(len(num_names)):
+                for j in range(i + 1, len(num_names)):
+                    try:
+                        x_col, y_col = num_names[i], num_names[j]
+                        corr_val = round(float(df[[x_col, y_col]].corr().iloc[0, 1]), 2)
+                        if abs(corr_val) < 0.3:
+                            continue
+                        img = chart_scatter(df[x_col], df[y_col],
+                                            f"{x_col} vs {y_col}", corr=corr_val)
+                        if img:
+                            scatter_items.append(
+                                col(f'<img src="{img}" style="max-width:100%;" alt="Scatter">', width=6)
+                            )
+                    except Exception:
+                        continue
+            if scatter_items:
+                scatter_html = ""
+                for si in range(0, min(len(scatter_items), 6), 2):
+                    scatter_html += row("".join(scatter_items[si:si+2]))
+                html += section_header("Pairwise Relationships", chr(9632), theme)
+                html += card(chr(9632) + " Pairwise Relationships", scatter_html, chr(9632), theme)
+
+        dim_for_radar = [c["name"] for c in cols_info
+                         if not c.get("numeric") and 2 <= c.get("unique_count", 999) <= 8
+                         and c.get("role") not in ("id", "code", "phone", "email")]
+        radar_num_cols = num_names
+        if dim_for_radar and len(radar_num_cols) >= 3:
+            radar_dim = dim_for_radar[0]
+            radar_nums = radar_num_cols[:6]
+            try:
+                sub = df.dropna(subset=[radar_dim] + radar_nums)
+                groups = sub.groupby(radar_dim)
+                labels = []
+                values_dict = {}
+                for nc in radar_nums:
+                    values_dict[nc] = []
+                for gname, gdf in groups:
+                    labels.append(str(gname)[:15])
+                    for nc in radar_nums:
+                        values_dict[nc].append(round(float(gdf[nc].mean()), 2))
+                img = chart_radar(labels, values_dict, f"Metrics by {radar_dim}")
+                if img:
+                    html += section_header("Radar Summary", chr(9679), theme)
+                    html += card(chr(9679) + f" Radar Summary — by {radar_dim}",
+                                 col(f'<img src="{img}" style="max-width:100%;">', width=6), chr(9679), theme)
+            except Exception:
+                pass
 
     html += page_end()
     return html
