@@ -1,5 +1,5 @@
 from datetime import datetime
-from utils.html_templates import page_start, page_end, card, styled_table, timestamp_label
+from utils.html_templates import page_start, page_end, card, styled_table, timestamp_label, row, col
 
 
 def _compute_npv(values, rate):
@@ -165,32 +165,40 @@ def render_report_html(report, theme="light"):
     html = page_start("Custom Report", theme)
     html += "<h2>" + chr(9670) + " Custom Report</h2>"
     html += timestamp_label(ts)
-    if report.get("group_by"):
-        html += f'<p class="muted">Group by: <b>{report["group_by"]}</b></p>'
 
     if not report["rows"]:
-        html += card(chr(9670) + " Report Data", '<p class="muted">No data to report.</p>', chr(9670), theme)
+        html += col(card(chr(9670) + " Report Data", '<p class="muted">No data to report.</p>', chr(9670), theme), width=12)
         html += page_end()
         return html
+
+    group_info = ""
+    if report.get("group_by"):
+        group_info = f'<p class="muted">Group by: <b>{report["group_by"]}</b></p>'
 
     headers = [""]
     for fi in report["functions"]:
         headers.append(f"{fi['col']} \u203a {fi['name']}")
-    rows = []
-    for row in report["rows"]:
-        r = [row["group"]]
+    rows_data = []
+    for row_item in report["rows"]:
+        r = [row_item["group"]]
         for fi in report["functions"]:
-            val = row.get(fi["key"], "")
+            val = row_item.get(fi["key"], "")
             if val is None:
                 r.append('<span style="color:#999;">N/A</span>')
             elif isinstance(val, float):
                 r.append(f"{val:,.2f}")
             else:
                 r.append(str(val))
-        rows.append(r)
-    table_html = styled_table(headers, rows, theme, first_col_left=True)
+        rows_data.append(r)
+    table_html = styled_table(headers, rows_data, theme, first_col_left=True)
     summary = f'<p class="muted" style="margin-top:12px;">Summary: {len(report["rows"])} groups, {len(report["functions"])} functions</p>'
-    html += card(chr(9670) + " Report Data", table_html + summary, chr(9670), theme)
+
+    html += row(
+        col(
+            group_info + card(chr(9670) + " Report Data", table_html + summary, chr(9670), theme),
+            width=12,
+        )
+    )
 
     html += page_end()
     return html

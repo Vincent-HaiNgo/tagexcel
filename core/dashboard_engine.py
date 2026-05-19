@@ -13,11 +13,11 @@ from utils.html_templates import (
     page_start,
     page_end,
     stat_box,
-    stat_box_row,
     card,
-    section_header,
     alert_row,
     timestamp_label,
+    row,
+    col,
 )
 
 
@@ -130,6 +130,18 @@ def _chart_top_categories(df, col, revenue_col=None):
         return ""
 
 
+def _fmt(n):
+    if n is None:
+        return "—"
+    if abs(n) >= 1_000_000_000:
+        return f"{n/1_000_000_000:,.1f}B"
+    if abs(n) >= 1_000_000:
+        return f"{n/1_000_000:,.1f}M"
+    if abs(n) >= 1_000:
+        return f"{n:,.0f}"
+    return f"{n:,.2f}"
+
+
 def compute_dashboard(df):
     roles = _detect_roles(df)
     total = len(df)
@@ -137,6 +149,8 @@ def compute_dashboard(df):
     revenue_cols = [c for c, r in roles.items() if r == "revenue"]
     date_cols = [c for c, r in roles.items() if r == "date"]
     dim_cols = [c for c, r in roles.items() if r == "dimension"]
+
+    num_cols_all = [c for c, r in roles.items() if r in ("revenue", "numeric")]
 
     total_revenue = None
     avg_revenue = None
@@ -147,31 +161,6 @@ def compute_dashboard(df):
         if len(rev) > 0:
             total_revenue = round(float(rev.sum()), 2)
             avg_revenue = round(float(rev.mean()), 2)
-
-    missing_pct = round(float(df.isnull().sum().sum()) / max(1, total * len(df.columns)) * 100, 1)
-    dupes_pct = round(float(df.duplicated().sum()) / max(1, total) * 100, 1)
-
-    outlier_count = 0
-    neg_count = 0
-    num_cols_all = [c for c, r in roles.items() if r in ("revenue", "numeric")]
-    for c in num_cols_all:
-        drop = df[c].dropna()
-        if len(drop) > 0:
-            q1 = drop.quantile(0.25)
-            q3 = drop.quantile(0.75)
-            iqr = q3 - q1
-            if iqr > 0:
-                outlier_count += int(((drop < q1 - 1.5 * iqr) | (drop > q3 + 1.5 * iqr)).sum())
-            neg_count += int((drop < 0).sum())
-
-    alerts = []
-    if outlier_count > 0:
-        alerts.append(f"{outlier_count} outlier values detected across numeric columns")
-    if neg_count > 0:
-        alerts.append(f"{neg_count} negative values found in financial columns")
-    sparse_cols = [c for c in df.columns if df[c].isnull().mean() > 0.95]
-    if sparse_cols:
-        alerts.append(f"{len(sparse_cols)} columns have >95% missing values")
 
     period_growth = None
     if date_cols and revenue_cols:
@@ -184,13 +173,65 @@ def compute_dashboard(df):
         except Exception:
             pass
 
+    dim_summary = {}
+    if dim_cols:
+        dim_summary["category_count"] = len(dim_cols)
+        top_items = []
+        for dc in dim_cols[:3]:
+            n_unique = int(df[dc].nunique())
+            top_items.append((dc, n_unique))
+        dim_summary["top_items"] = top_items
+
+    kpi = []
+    if total_revenue is not None:
+        kpi.append({"value": _fmt(total_revenue), "label": "Total Revenue", "color": "teal", "icon": chr(9670)})
+        kpi.append({"value": _fmt(avg_revenue), "label": "Avg Transaction", "color": "green", "icon": chr(9679)})
+        if period_growth is not None:
+            arrow = chr(9650) if period_growth >= 0 else chr(9660)
+            gcolor = "green" if period_growth >= 0 else "red"
+            kpi.append({"value": f"{arrow} {abs(period_growth)}%", "label": "Period Growth", "color": gcolor, "icon": arrow})
+        kpi.append({"value": f"{rev_count:,}", "label": "Transactions", "color": "blue", "icon": chr(9671)})
+    else:
+        kpi.append({"value": f"{total:,}", "label": "Records", "color": "teal", "icon": chr(9670)})
+        if num_cols_all:
+            n = len(num_cols_all)
+            kpi.append({"value": str(n), "label": "Numeric Columns", "color": "blue", "icon": chr(9671)})
+        if dim_cols:
+            kpi.append({"value": str(len(dim_cols)), "label": "Dimensions", "color": "green", "icon": chr(9679)})
+        if date_cols:
+            kpi.append({"value": str(len(date_cols)), "label": "Time Series", "color": "orange", "icon": chr(9650)})
+
+    alerts = []
+    if revenue_cols and num_cols_all:
+        neg_count = 0
+        for c in num_cols_all:
+            drop = df[c].dropna()
+            if len(drop) > 0:
+                neg_count += int((drop < 0).sum())
+        if neg_count > 0:
+            alerts.append(f"{neg_count} negative values found in financial columns — verify data integrity")
+
+    if revenue_cols and period_growth is not None and period_growth < -5:
+        alerts.append(f"Revenue dropped {abs(period_growth)}% vs prior period — may need attention")
+
+    sparse_cols = [c for c in df.columns if df[c].isnull().mean() > 0.95]
+    if sparse_cols:
+        alerts.append(f"{len(sparse_cols)} column(s) have >95% missing values — consider removing")
+
+    outlier_count = 0
+    for c in num_cols_all:
+        drop = df[c].dropna()
+        if len(drop) > 1:
+            q1 = drop.quantile(0.25)
+            q3 = drop.quantile(0.75)
+            iqr = q3 - q1
+            if iqr > 0:
+                outlier_count += int(((drop < q1 - 1.5 * iqr) | (drop > q3 + 1.5 * iqr)).sum())
+    if outlier_count > 0:
+        alerts.append(f"{outlier_count} outlier values detected — review for data entry errors")
+
     return {
-        "overview": {
-            "rows": total,
-            "columns": len(df.columns),
-            "missing_pct": missing_pct,
-            "dupes_pct": dupes_pct,
-        },
+        "kpi": kpi,
         "revenue": {
             "columns": revenue_cols,
             "total": total_revenue,
@@ -199,13 +240,14 @@ def compute_dashboard(df):
             "period_growth": period_growth,
         },
         "roles": roles,
+        "dim_summary": dim_summary,
         "alerts": alerts,
     }
 
 
 def render_dashboard_html(data, df, theme="light"):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ov = data["overview"]
+    kpi = data["kpi"]
     rev = data["revenue"]
     alerts = data["alerts"]
 
@@ -213,52 +255,46 @@ def render_dashboard_html(data, df, theme="light"):
     html += f"<h2>{chr(9670)} Business Dashboard</h2>"
     html += timestamp_label(ts)
 
-    ov_missing_color = "green" if ov["missing_pct"] < 5 else ("orange" if ov["missing_pct"] < 20 else "red")
-    ov_dupes_color = "green" if ov["dupes_pct"] < 1 else ("orange" if ov["dupes_pct"] < 5 else "red")
-
-    boxes = ""
-    boxes += stat_box(f"{ov['rows']:,}", "Rows", "teal", chr(9670), theme)
-    boxes += stat_box(str(ov["columns"]), "Columns", "blue", chr(9671), theme)
-    boxes += stat_box(f"{ov['missing_pct']}%", "Missing", ov_missing_color, chr(9650), theme)
-    boxes += stat_box(f"{ov['dupes_pct']}%", "Duplicates", ov_dupes_color, chr(9670), theme)
-    html += card(f"{chr(9670)} Overview", stat_box_row(boxes, theme), chr(9670), theme)
-
-    if rev["total"] is not None:
+    if kpi:
         boxes = ""
-        boxes += stat_box(f"{rev['total']:,.0f}", "Total", "teal", chr(9670), theme)
-        boxes += stat_box(f"{rev['average']:,.0f}", "Average", "green", chr(9679), theme)
-        boxes += stat_box(f"{rev['transactions']:,}", "Transactions", "blue", chr(9671), theme)
-        if rev["period_growth"] is not None:
-            gcolor = "green" if rev["period_growth"] >= 0 else "red"
-            arrow = chr(9650) if rev["period_growth"] >= 0 else chr(9660)
-            boxes += stat_box(f"{arrow} {abs(rev['period_growth'])}%", "vs Prev", gcolor, arrow, theme)
-        html += card(f"{chr(9679)} Revenue Summary", stat_box_row(boxes, theme), chr(9679), theme)
+        for k in kpi:
+            boxes += col(stat_box(k["value"], k["label"], k["color"], k["icon"], theme), width=3)
+        html += card(f"{chr(9670)} Key Metrics", row(boxes), chr(9670), theme)
 
     revenue_cols = rev["columns"]
     date_cols = [c for c, r in data["roles"].items() if r == "date"]
     dim_cols = [c for c, r in data["roles"].items() if r == "dimension"]
 
+    charts_row = ""
     if revenue_cols and date_cols:
         img = _chart_revenue_trend(df, revenue_cols[0], date_cols[0])
         if img:
-            html += section_header("Revenue Trend", chr(9632), theme)
-            html += card(f"{chr(9632)} Revenue Trend", f'<img src="{img}" style="max-width:100%;">', chr(9632), theme)
+            charts_row += col(
+                card(f"{chr(9632)} Revenue Trend", f'<img src="{img}" style="max-width:100%;">', chr(9632), theme),
+                width=6,
+            )
 
     main_rev = revenue_cols[0] if revenue_cols else None
     if dim_cols:
-        html += section_header("Top Categories", chr(9632), theme)
-        charts_body = ""
+        chart_bodies = ""
         for dc in dim_cols[:4]:
             img = _chart_top_categories(df, dc, revenue_col=main_rev)
             if img:
-                charts_body += f'<img src="{img}" style="max-width:49%;display:inline-block;vertical-align:top;">'
-        if charts_body:
-            html += card(f"{chr(9632)} Top Categories", charts_body, chr(9632), theme)
+                chart_bodies += f'<img src="{img}" style="max-width:100%;margin:4px 0;">'
+        if chart_bodies:
+            charts_row += col(
+                card(f"{chr(9632)} Top Categories", chart_bodies, chr(9632), theme),
+                width=6,
+            )
+
+    if charts_row:
+        html += row(charts_row)
 
     if alerts:
-        html += section_header("Alerts", chr(9650), theme)
+        alert_body = ""
         for a in alerts:
-            html += alert_row(a, "warn")
+            alert_body += alert_row(a, "warn")
+        html += col(card(f"{chr(9650)} Alerts", alert_body, chr(9650), theme), width=12)
 
     html += page_end()
     return html

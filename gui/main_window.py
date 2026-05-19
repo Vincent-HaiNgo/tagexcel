@@ -73,6 +73,7 @@ class MainWindow(QMainWindow):
 
         self._apply_theme()
         self._update_logo()
+        self._tabs.setCurrentIndex(1)
 
     def _update_logo(self):
         theme = self._settings_tab.get_theme()

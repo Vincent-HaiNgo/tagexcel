@@ -61,7 +61,7 @@ class JoinTab(QWidget):
         self._ai_recommendation.setMaximumHeight(60)
         ai_col.addWidget(self._btn_ask_ai)
         ai_col.addWidget(self._ai_recommendation)
-        row2.addLayout(ai_col, 1)
+        row2.addLayout(ai_col, 2)
 
         # --- Join controls column ---
         join_col = QVBoxLayout()
@@ -90,15 +90,18 @@ class JoinTab(QWidget):
         merge_row.addStretch()
         join_col.addLayout(merge_row)
 
-        row2.addLayout(join_col)
+        row2.addLayout(join_col, 1)
 
         # --- Row 6: Action buttons ---
         row6 = QHBoxLayout()
         self._btn_preview = QPushButton(tr("btn_preview_join"))
         self._btn_apply = QPushButton(tr("btn_apply_join"))
         self._btn_apply.setEnabled(False)
+        self._lbl_status = QLabel("")
+        self._status = StatusHelper(self._lbl_status)
         row6.addWidget(self._btn_preview)
         row6.addWidget(self._btn_apply)
+        row6.addWidget(self._lbl_status)
         row6.addStretch()
 
         # --- Splitter: df-working table + Log + right/merged table ---
@@ -116,11 +119,6 @@ class JoinTab(QWidget):
         layout.addLayout(row1)
         layout.addLayout(row2)
         layout.addLayout(row6)
-
-        self._lbl_status = QLabel("")
-        layout.addWidget(self._lbl_status)
-
-        self._status = StatusHelper(self._lbl_status)
 
         layout.addWidget(splitter)
 

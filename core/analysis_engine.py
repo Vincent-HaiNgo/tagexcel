@@ -13,12 +13,13 @@ from utils.html_templates import (
     page_start,
     page_end,
     stat_box,
-    stat_box_row,
     card,
     section_header,
     styled_table,
     badge,
     timestamp_label,
+    row,
+    col,
 )
 
 
@@ -392,36 +393,41 @@ def render_statistics_html(stats, df=None, theme="light"):
 
     dupes_color = "red" if ov["duplicates"] > 0 else "green"
     boxes = ""
-    boxes += stat_box(f"{ov['rows']:,}", "Rows", "teal", chr(9670), theme)
-    boxes += stat_box(str(ov["columns"]), "Columns", "blue", chr(9671), theme)
-    boxes += stat_box(f"{ov['memory_kb']:.0f} KB", "Memory", "green", chr(9679), theme)
-    boxes += stat_box(f"{ov['duplicates']:,} ({ov['duplicates_pct']}%)", "Duplicates", dupes_color, chr(9670), theme)
-    html += card(chr(9670) + " Overview", stat_box_row(boxes, theme), chr(9670), theme)
+    boxes += col(stat_box(f"{ov['rows']:,}", "Rows", "teal", chr(9670), theme), width=3)
+    boxes += col(stat_box(str(ov["columns"]), "Columns", "blue", chr(9671), theme), width=3)
+    boxes += col(stat_box(f"{ov['memory_kb']:.0f} KB", "Memory", "green", chr(9679), theme), width=3)
+    boxes += col(stat_box(f"{ov['duplicates']:,} ({ov['duplicates_pct']}%)", "Duplicates", dupes_color, chr(9670), theme), width=3)
+    html += card(chr(9670) + " Overview", row(boxes), chr(9670), theme)
     html += f'<p class="muted">Missing cells: {ov["missing_cells"]:,} ({ov["missing_cells_pct"]}% of all cells)</p>'
 
     type_headers = ["Type", "Count"]
     type_rows = [[dtype.capitalize(), str(count)] for dtype, count in ct.items()]
     html += card(chr(9671) + " Column Types", styled_table(type_headers, type_rows, theme), chr(9671), theme)
 
-    html += section_header("Missing Patterns", chr(9650), theme)
-    mp_body = ""
+    mp_content = row("")
+    mp_left = ""
     if df is not None:
         missing_img = _chart_missing_bars(stats)
         if missing_img:
-            mp_body += f'<img src="{missing_img}" style="max-width:100%;" alt="Missing data chart"><br>'
+            mp_left += f'<img src="{missing_img}" style="max-width:100%;" alt="Missing data chart">'
+    mp_right = ""
     if mp["top_null_columns"]:
-        mp_body += "<p><b>Top columns by null %:</b></p>"
+        mp_right += "<b>Top columns by null %:</b>"
         nh = ["Column", "Nulls", "%"]
         nr = [[name, f"{cnt:,}", _null_badge(pct)] for name, cnt, pct in mp["top_null_columns"]]
-        mp_body += styled_table(nh, nr, theme)
-    else:
-        mp_body += "<p>No missing values found.</p>"
+        mp_right += styled_table(nh, nr, theme)
     if mp["top_null_rows"]:
-        mp_body += "<p><b>Top rows by null count:</b></p>"
+        mp_right += "<br><b>Top rows by null count:</b>"
         rh = ["Row #", "Nulls"]
         rr = [[str(idx), str(cnt)] for idx, cnt in mp["top_null_rows"]]
-        mp_body += styled_table(rh, rr, theme)
-    html += card(chr(9650) + " Missing Patterns", mp_body, chr(9650), theme)
+        mp_right += styled_table(rh, rr, theme)
+    if not mp_right:
+        mp_right += "<p>No missing values found.</p>"
+
+    mp_content = ""
+    mp_content += col(mp_left, width=6)
+    mp_content += col(mp_right, width=6)
+    html += card(chr(9650) + " Missing Patterns", row(mp_content), chr(9650), theme)
 
     html += section_header("Per-Column Analysis", chr(9632), theme)
     col_headers = [
@@ -430,7 +436,7 @@ def render_statistics_html(stats, df=None, theme="light"):
     ]
     col_rows = []
     for c in stats["columns"]:
-        row = []
+        row_data = []
         role = c.get("role", "normal")
         role_badge = ""
         if role in ("id", "code"):
@@ -439,39 +445,42 @@ def render_statistics_html(stats, df=None, theme="light"):
             role_badge = badge("SKIPPED", "orange")
         elif role == "derived":
             role_badge = badge("DERIVED", "purple")
-        row.append(f"<b>{c['name']}</b>{role_badge}")
-        row.append(c["dtype"])
-        row.append(f"{c['null_count']:,}")
-        row.append(_null_badge(c["null_pct"]))
-        row.append(f"{c['unique_count']:,}")
-        row.append(f"{c['unique_pct']}%")
+        row_data.append(f"<b>{c['name']}</b>{role_badge}")
+        row_data.append(c["dtype"])
+        row_data.append(f"{c['null_count']:,}")
+        row_data.append(_null_badge(c["null_pct"]))
+        row_data.append(f"{c['unique_count']:,}")
+        row_data.append(f"{c['unique_pct']}%")
         if "numeric" in c:
             n = c["numeric"]
-            row += [str(n["min"]), str(n["max"]), str(n["mean"]), str(n["median"]), str(n["std"]),
-                    str(n["q1"]), str(n["q3"]), str(n["iqr"]), str(n["skewness"]), str(n["kurtosis"]), str(n["outliers"])]
+            row_data += [str(n["min"]), str(n["max"]), str(n["mean"]), str(n["median"]), str(n["std"]),
+                        str(n["q1"]), str(n["q3"]), str(n["iqr"]), str(n["skewness"]), str(n["kurtosis"]), str(n["outliers"])]
         else:
-            row += ["-"] * 11
+            row_data += ["-"] * 11
         if "text" in c:
             tv = c["text"]
             top_str = "<br>".join(f"{k}: {v}" for k, v in tv["top_values"])
-            row.append(f'<span style="font-size:11px;">{top_str}</span>')
+            row_data.append(f'<span style="font-size:11px;">{top_str}</span>')
         else:
-            row.append("-")
-        col_rows.append(row)
+            row_data.append("-")
+        col_rows.append(row_data)
     html += card(chr(9632) + " Per-Column Analysis", styled_table(col_headers, col_rows, theme), chr(9632), theme)
 
     if df is not None:
         num_cols = [c for c in stats["columns"] if "numeric" in c]
         if num_cols:
-            html += section_header("Numeric Distributions", chr(9632), theme)
-            dist_body = ""
+            dist_row = ""
             for c in num_cols[:6]:
                 cname = c["name"]
                 img = _chart_histogram(df[cname], cname)
                 if img:
-                    dist_body += f'<img src="{img}" style="max-width:100%;margin:4px 0;" alt="Histogram of {cname}"><br>'
-            if dist_body:
-                html += card(chr(9632) + " Numeric Distributions", dist_body, chr(9632), theme)
+                    dist_row += col(
+                        f'<img src="{img}" style="max-width:100%;margin:4px 0;" alt="Histogram of {cname}">',
+                        width=6,
+                    )
+            if dist_row:
+                html += section_header("Numeric Distributions", chr(9632), theme)
+                html += card(chr(9632) + " Numeric Distributions", row(dist_row), chr(9632), theme)
 
     corr = stats["correlation"]
     if corr and corr["columns"]:
@@ -482,13 +491,14 @@ def render_statistics_html(stats, df=None, theme="light"):
                 corr_body += f'<img src="{heat_img}" style="max-width:100%;" alt="Correlation heatmap"><br><br>'
         corr_headers = [""] + corr["columns"]
         corr_rows = []
-        for i, row in enumerate(corr["matrix"]):
+        for i, r_val in enumerate(corr["matrix"]):
             r = [f"<b>{corr['columns'][i]}</b>"]
-            for val in row:
+            for val in r_val:
                 bg = _corr_color(val)
                 r.append(f'<span style="display:block;background:{bg};text-align:center;padding:2px 4px;">{val}</span>')
             corr_rows.append(r)
         corr_body += styled_table(corr_headers, corr_rows, theme, first_col_left=True)
+        html += section_header("Correlation Heatmap", chr(9670), theme)
         html += card(chr(9670) + " Correlation Heatmap", corr_body, chr(9670), theme)
 
     html += page_end()
