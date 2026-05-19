@@ -381,6 +381,14 @@ def _null_badge(pct):
         return f'<span style="color:#e74c3c;font-weight:bold;">{pct}%</span>'
 
 
+def _fmt_num(n):
+    if isinstance(n, (int, float)):
+        if n == int(n) and abs(n) < 1_000_000:
+            return f"{int(n):,}"
+        return f"{n:,.2f}"
+    return str(n)
+
+
 def render_statistics_html(stats, df=None, theme="light"):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ov = stats["overview"]
@@ -453,8 +461,9 @@ def render_statistics_html(stats, df=None, theme="light"):
         row_data.append(f"{c['unique_pct']}%")
         if "numeric" in c:
             n = c["numeric"]
-            row_data += [str(n["min"]), str(n["max"]), str(n["mean"]), str(n["median"]), str(n["std"]),
-                        str(n["q1"]), str(n["q3"]), str(n["iqr"]), str(n["skewness"]), str(n["kurtosis"]), str(n["outliers"])]
+            row_data += [_fmt_num(n["min"]), _fmt_num(n["max"]), _fmt_num(n["mean"]), _fmt_num(n["median"]),
+                         _fmt_num(n["std"]), _fmt_num(n["q1"]), _fmt_num(n["q3"]), _fmt_num(n["iqr"]),
+                         _fmt_num(n["skewness"]), _fmt_num(n["kurtosis"]), _fmt_num(n["outliers"])]
         else:
             row_data += ["-"] * 11
         if "text" in c:

@@ -16,9 +16,10 @@ a { color: #00897b; text-decoration: none; }
 .card-header { background: #00897b; color: #ffffff; padding: 10px 16px; border-radius: 6px 6px 0 0; font-size: 14px; font-weight: bold; }
 .card-header-icon { float: left; margin-right: 8px; font-size: 16px; }
 .card-body { padding: 16px; }
-.stat-box { display: inline-block; vertical-align: top; min-width: 120px; margin: 6px; border-radius: 6px; padding: 14px 16px; color: #ffffff; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.stat-box { display: block; width: 100%; margin: 0; border-radius: 6px; padding: 14px 16px; color: #ffffff; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.15); box-sizing: border-box; }
 .stat-box-icon { float: right; font-size: 28px; opacity: 0.4; margin-left: 10px; margin-top: 2px; }
-.stat-box-row { margin: 4px 0; }
+.stat-box-row { display: flex; flex-wrap: wrap; margin: 4px -6px; }
+.stat-box-row .stat-box { flex: 1; min-width: 120px; margin: 6px; }
 .section-h3 { border-left: 4px solid #00897b; padding: 4px 12px; margin: 20px 0 10px 0; font-size: 16px; color: #00897b; }
 .tst-table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px; }
 .tst-th { background: #00897b; color: #ffffff; padding: 8px 10px; text-align: right; border: 1px solid #00695c; font-weight: bold; }
@@ -48,9 +49,10 @@ a { color: #4db6ac; text-decoration: none; }
 .card-header { background: #00695c; color: #ffffff; padding: 10px 16px; border-radius: 6px 6px 0 0; font-size: 14px; font-weight: bold; }
 .card-header-icon { float: left; margin-right: 8px; font-size: 16px; }
 .card-body { padding: 16px; }
-.stat-box { display: inline-block; vertical-align: top; min-width: 120px; margin: 6px; border-radius: 6px; padding: 14px 16px; color: #ffffff; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.35); }
+.stat-box { display: block; width: 100%; margin: 0; border-radius: 6px; padding: 14px 16px; color: #ffffff; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.35); box-sizing: border-box; }
 .stat-box-icon { float: right; font-size: 28px; opacity: 0.4; margin-left: 10px; margin-top: 2px; }
-.stat-box-row { margin: 4px 0; }
+.stat-box-row { display: flex; flex-wrap: wrap; margin: 4px -6px; }
+.stat-box-row .stat-box { flex: 1; min-width: 120px; margin: 6px; }
 .section-h3 { border-left: 4px solid #4db6ac; padding: 4px 12px; margin: 20px 0 10px 0; font-size: 16px; color: #4db6ac; }
 .tst-table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px; }
 .tst-th { background: #00695c; color: #ffffff; padding: 8px 10px; text-align: right; border: 1px solid #004d40; font-weight: bold; }
