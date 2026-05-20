@@ -552,16 +552,21 @@ class ChatboxTab(QWidget):
 
             rows_str = params.get("rows", "")
             if rows_str:
-                rows_to_drop = []
-                for part in rows_str.split(","):
-                    part = part.strip()
-                    if "-" in part:
-                        a, b = part.split("-", 1)
-                        rows_to_drop.extend(
-                            range(int(a.strip()), int(b.strip()) + 1)
-                        )
-                    else:
-                        rows_to_drop.append(int(part))
+                try:
+                    rows_to_drop = []
+                    for part in rows_str.split(","):
+                        part = part.strip()
+                        if "-" in part:
+                            a, b = part.split("-", 1)
+                            rows_to_drop.extend(
+                                range(int(a.strip()), int(b.strip()) + 1)
+                            )
+                        else:
+                            rows_to_drop.append(int(part))
+                except ValueError as e:
+                    raise ValueError(
+                        f"Invalid rows format: {rows_str}"
+                    ) from e
                 df_result = df_result.drop(
                     df_result.index[rows_to_drop], errors="ignore"
                 )
