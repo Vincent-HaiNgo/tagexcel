@@ -832,12 +832,12 @@ class ChatHistoryDialog(QDialog):
     def __init__(self, sessions, parent=None):
         super().__init__(parent)
         self.setWindowTitle(tr("dlg_chat_history_title"))
-        self.resize(550, 400)
+        self.setMinimumSize(550, 400)
         self._sessions = sessions
         self._selected_id = None
+        self._to_delete = []
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel(tr("dlg_chat_history_title")))
 
         self._list = QListWidget()
         for s in sessions:
@@ -879,7 +879,7 @@ class ChatHistoryDialog(QDialog):
         if to_delete:
             reply = QMessageBox.question(
                 self, "tagexcel",
-                f"Delete {len(to_delete)} selected session(s)?",
+                tr("msg_confirm_delete_sessions").format(count=len(to_delete)),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
             if reply == QMessageBox.StandardButton.Yes:
@@ -891,20 +891,19 @@ class ChatHistoryDialog(QDialog):
         return self._selected_id
 
     def get_sessions_to_delete(self):
-        return getattr(self, "_to_delete", [])
+        return self._to_delete
 
 
 class WorkflowPickerDialog(QDialog):
     def __init__(self, workflows, parent=None):
         super().__init__(parent)
         self.setWindowTitle(tr("dlg_workflow_picker_title"))
-        self.resize(500, 350)
+        self.setMinimumSize(500, 350)
         self._workflows = workflows
         self._selected_id = None
         self._to_delete = None
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel(tr("dlg_workflow_picker_title")))
 
         self._list = QListWidget()
         for wf in workflows:
@@ -943,7 +942,7 @@ class WorkflowPickerDialog(QDialog):
         wf_id = item.data(Qt.ItemDataRole.UserRole)
         reply = QMessageBox.question(
             self, "tagexcel",
-            "Delete this workflow?",
+            tr("msg_confirm_delete_workflow"),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         if reply == QMessageBox.StandardButton.Yes:
@@ -961,7 +960,7 @@ class WorkflowCreatorDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(tr("dlg_workflow_create_title"))
-        self.resize(400, 250)
+        self.setMinimumSize(400, 250)
 
         layout = QVBoxLayout(self)
 

@@ -227,8 +227,9 @@ EN = {
     "lbl_chatbox_hint": "Describe what you want to do with your data...",
     "lbl_export_hint": "Feel free to do it in any order, and don't forget to export the file.",
     "ph_chatbox_input": "Ask me to clean, analyze, pivot, report...",
+    "msg_confirm_delete_sessions": "Delete {count} selected session(s)?",
+    "msg_confirm_delete_workflow": "Delete this workflow?",
 }
-
 VI = {
     "app_title": "tagexcel",
     "tab_files": "T\u1ec7p tin",
@@ -457,6 +458,8 @@ VI = {
     "lbl_chatbox_hint": "M\u00f4 t\u1ea3 \u0111i\u1ec1u b\u1ea1n mu\u1ed1n l\u00e0m v\u1edbi d\u1eef li\u1ec7u...",
     "lbl_export_hint": "H\u00e3y tho\u1ea3i m\u00e1i l\u00e0m theo th\u1ee9 t\u1ef1 n\u00e0o c\u0169ng \u0111\u01b0\u1ee3c, v\u00e0 \u0111\u1eebng qu\u00ean xu\u1ea5t t\u1ec7p.",
     "ph_chatbox_input": "Y\u00eau c\u1ea7u t\u00f4i l\u00e0m s\u1ea1ch, ph\u00e2n t\u00edch, pivot, b\u00e1o c\u00e1o...",
+    "msg_confirm_delete_sessions": "X\u00f3a {count} phi\u00ean \u0111\u00e3 ch\u1ecdn?",
+    "msg_confirm_delete_workflow": "X\u00f3a quy tr\u00ecnh n\u00e0y?",
 }
 
 
