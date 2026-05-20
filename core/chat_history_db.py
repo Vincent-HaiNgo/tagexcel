@@ -111,6 +111,8 @@ class ChatHistoryDB:
         self._conn.commit()
 
     def delete_sessions(self, session_ids: list[int]):
+        if not session_ids:
+            return
         placeholders = ",".join("?" * len(session_ids))
         self._conn.execute(
             f"DELETE FROM chat_sessions WHERE id IN ({placeholders})",

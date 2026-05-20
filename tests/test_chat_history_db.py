@@ -2,6 +2,7 @@ import os
 import sqlite3
 import tempfile
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -95,7 +96,6 @@ def test_session_cap_enforces_25_limit(db):
 
 
 def test_session_updated_at_tracks_latest_message(db):
-    import time
     sid = db.create_session()
     before = db.get_sessions()[0]["updated_at"]
     time.sleep(0.1)
@@ -110,3 +110,9 @@ def test_session_message_count(db):
     db.add_message(sid, "assistant", "msg2")
     sessions = db.get_sessions()
     assert sessions[0]["message_count"] == 2
+
+
+def test_delete_sessions_empty_list(db):
+    db.create_session("A")
+    db.delete_sessions([])
+    assert len(db.get_sessions()) == 1
