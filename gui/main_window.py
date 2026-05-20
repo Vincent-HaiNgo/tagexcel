@@ -20,6 +20,7 @@ from gui.pivot_tab import PivotTab
 from gui.settings_tab import SettingsTab
 from gui.analysis_tab import AnalysisTab
 from gui.report_tab import ReportTab
+from gui.chatbox_tab import ChatboxTab
 
 
 class MainWindow(QMainWindow):
@@ -47,6 +48,7 @@ class MainWindow(QMainWindow):
         self._pivot_tab = PivotTab(data_manager, ai_client)
         self._analysis_tab = AnalysisTab(data_manager, ai_client)
         self._report_tab = ReportTab(data_manager, ai_client)
+        self._chatbox_tab = ChatboxTab(data_manager, parser_engine, ai_client)
         self._settings_tab = SettingsTab(ai_client)
 
         self._tabs.addTab(self._dashboard_tab, tr("tab_dashboard"))
@@ -57,6 +59,7 @@ class MainWindow(QMainWindow):
         self._tabs.addTab(self._pivot_tab, tr("tab_pivot"))
         self._tabs.addTab(self._analysis_tab, tr("tab_analysis"))
         self._tabs.addTab(self._report_tab, tr("tab_report"))
+        self._tabs.addTab(self._chatbox_tab, tr("tab_chatbox"))
         self._tabs.addTab(self._settings_tab, tr("tab_settings"))
 
         # Logo on tab bar corner
@@ -102,7 +105,8 @@ class MainWindow(QMainWindow):
         self._tabs.setTabText(5, tr("tab_pivot"))
         self._tabs.setTabText(6, tr("tab_analysis"))
         self._tabs.setTabText(7, tr("tab_report"))
-        self._tabs.setTabText(8, tr("tab_settings"))
+        self._tabs.setTabText(8, tr("tab_chatbox"))
+        self._tabs.setTabText(9, tr("tab_settings"))
         self._dashboard_tab.retranslate_ui()
         self._files_tab.retranslate_ui()
         self._parsing_tab.retranslate_ui()
@@ -111,6 +115,7 @@ class MainWindow(QMainWindow):
         self._pivot_tab.retranslate_ui()
         self._analysis_tab.retranslate_ui()
         self._report_tab.retranslate_ui()
+        self._chatbox_tab.retranslate_ui()
         self._settings_tab.retranslate_ui()
 
     def _on_tab_changed(self, index):
@@ -130,6 +135,8 @@ class MainWindow(QMainWindow):
             self._analysis_tab.refresh()
         elif index == 7:
             self._report_tab.refresh()
+        elif index == 8:
+            self._chatbox_tab.refresh()
 
     def _apply_theme(self, theme=None):
         if theme is None:
