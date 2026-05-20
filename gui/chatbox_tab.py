@@ -331,6 +331,8 @@ class ChatboxTab(QWidget):
         }
 
     def _on_send(self):
+        if self._busy:
+            return
         user_text = self._chat_input.text().strip()
         if not user_text:
             return
@@ -577,6 +579,9 @@ class ChatboxTab(QWidget):
             values = params.get("values", [])
             agg = params.get("agg", "sum")
 
+            agg_map = {"avg": "mean", "average": "mean"}
+            agg = agg_map.get(agg, agg)
+
             valid_rows = [c for c in rows if c in df.columns]
             valid_cols = [c for c in columns if c in df.columns]
             valid_values = [c for c in values if c in df.columns]
@@ -639,7 +644,8 @@ class ChatboxTab(QWidget):
                 "rate": rate,
             }
             report = compute_report(df, config)
-            html = render_report_html(report)
+            theme = QSettings("tagexcel", "tagexcel").value("theme", "light")
+            html = render_report_html(report, theme=theme)
             self._display_output(html)
 
         elif action == "dashboard":
@@ -652,7 +658,6 @@ class ChatboxTab(QWidget):
             self._display_output(html)
 
         elif action == "export":
-            fmt = params.get("format", "xlsx")
             df = self._data_manager.df_working
             if df is None:
                 raise ValueError("No data to export.")
