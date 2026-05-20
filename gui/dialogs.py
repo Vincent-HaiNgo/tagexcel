@@ -17,6 +17,8 @@ from PyQt6.QtWidgets import (
     QApplication,
     QGroupBox,
     QDoubleSpinBox,
+    QTextEdit,
+    QListWidgetItem,
 )
 import pandas as pd
 import json
@@ -822,3 +824,182 @@ class ReportDialog(QDialog):
             )
         finally:
             self._btn_ai_suggest.setEnabled(True)
+
+
+# --- Chat History Dialog ---
+
+class ChatHistoryDialog(QDialog):
+    def __init__(self, sessions, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(tr("dlg_chat_history_title"))
+        self.resize(550, 400)
+        self._sessions = sessions
+        self._selected_id = None
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel(tr("dlg_chat_history_title")))
+
+        self._list = QListWidget()
+        for s in sessions:
+            label = f"{s['name']}  |  {s['message_count']} messages  |  {s['updated_at']}"
+            item = QListWidgetItem(label)
+            item.setData(Qt.ItemDataRole.UserRole, s["id"])
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Unchecked)
+            self._list.addItem(item)
+        layout.addWidget(self._list)
+
+        btn_layout = QHBoxLayout()
+        self._btn_resume = QPushButton(tr("dlg_chat_history_resume"))
+        self._btn_delete = QPushButton(tr("dlg_chat_history_delete"))
+        self._btn_cancel = QPushButton(tr("dlg_cancel"))
+        btn_layout.addWidget(self._btn_resume)
+        btn_layout.addWidget(self._btn_delete)
+        btn_layout.addStretch()
+        btn_layout.addWidget(self._btn_cancel)
+        layout.addLayout(btn_layout)
+
+        self._btn_resume.clicked.connect(self._on_resume)
+        self._btn_delete.clicked.connect(self._on_delete)
+        self._btn_cancel.clicked.connect(self.reject)
+
+    def _on_resume(self):
+        item = self._list.currentItem()
+        if not item:
+            return
+        self._selected_id = item.data(Qt.ItemDataRole.UserRole)
+        self.accept()
+
+    def _on_delete(self):
+        to_delete = []
+        for i in range(self._list.count()):
+            item = self._list.item(i)
+            if item is not None and item.checkState() == Qt.CheckState.Checked:
+                to_delete.append(item.data(Qt.ItemDataRole.UserRole))
+        if to_delete:
+            reply = QMessageBox.question(
+                self, "tagexcel",
+                f"Delete {len(to_delete)} selected session(s)?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self._selected_id = None
+                self._to_delete = to_delete
+                self.accept()
+
+    def get_selected_session_id(self):
+        return self._selected_id
+
+    def get_sessions_to_delete(self):
+        return getattr(self, "_to_delete", [])
+
+
+class WorkflowPickerDialog(QDialog):
+    def __init__(self, workflows, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(tr("dlg_workflow_picker_title"))
+        self.resize(500, 350)
+        self._workflows = workflows
+        self._selected_id = None
+        self._to_delete = None
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel(tr("dlg_workflow_picker_title")))
+
+        self._list = QListWidget()
+        for wf in workflows:
+            label = f"{wf['name']}\n{wf['description']}"
+            item = QListWidgetItem(label)
+            item.setData(Qt.ItemDataRole.UserRole, wf["id"])
+            self._list.addItem(item)
+        layout.addWidget(self._list)
+
+        btn_layout = QHBoxLayout()
+        self._btn_load = QPushButton(tr("dlg_workflow_picker_load"))
+        self._btn_delete_wf = QPushButton(tr("dlg_workflow_picker_delete"))
+        self._btn_cancel = QPushButton(tr("dlg_cancel"))
+        btn_layout.addWidget(self._btn_load)
+        btn_layout.addWidget(self._btn_delete_wf)
+        btn_layout.addStretch()
+        btn_layout.addWidget(self._btn_cancel)
+        layout.addLayout(btn_layout)
+
+        self._btn_load.clicked.connect(self._on_load)
+        self._btn_delete_wf.clicked.connect(self._on_delete)
+        self._btn_cancel.clicked.connect(self.reject)
+
+    def _on_load(self):
+        item = self._list.currentItem()
+        if not item:
+            QMessageBox.information(self, "tagexcel", tr("msg_chatbox_no_workflow"))
+            return
+        self._selected_id = item.data(Qt.ItemDataRole.UserRole)
+        self.accept()
+
+    def _on_delete(self):
+        item = self._list.currentItem()
+        if not item:
+            return
+        wf_id = item.data(Qt.ItemDataRole.UserRole)
+        reply = QMessageBox.question(
+            self, "tagexcel",
+            "Delete this workflow?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            self._to_delete = wf_id
+            self.accept()
+
+    def get_selected_workflow_id(self):
+        return self._selected_id
+
+    def get_workflow_to_delete(self):
+        return self._to_delete
+
+
+class WorkflowCreatorDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(tr("dlg_workflow_create_title"))
+        self.resize(400, 250)
+
+        layout = QVBoxLayout(self)
+
+        layout.addWidget(QLabel(tr("dlg_workflow_name") + ":"))
+        self._name_input = QLineEdit()
+        layout.addWidget(self._name_input)
+
+        layout.addWidget(QLabel(tr("dlg_workflow_description") + ":"))
+        self._desc_input = QTextEdit()
+        self._desc_input.setMaximumHeight(80)
+        layout.addWidget(self._desc_input)
+
+        btn_layout = QHBoxLayout()
+        self._btn_save = QPushButton(tr("dlg_workflow_save"))
+        self._btn_cancel = QPushButton(tr("dlg_cancel"))
+        btn_layout.addStretch()
+        btn_layout.addWidget(self._btn_save)
+        btn_layout.addWidget(self._btn_cancel)
+        layout.addLayout(btn_layout)
+
+        self._btn_save.clicked.connect(self._on_save)
+        self._btn_cancel.clicked.connect(self.reject)
+
+    def _on_save(self):
+        name = self._name_input.text().strip()
+        desc = self._desc_input.toPlainText().strip()
+        if not name:
+            QMessageBox.warning(self, "tagexcel", tr("msg_chatbox_name_required"))
+            return
+        if len(desc.split()) > 100:
+            QMessageBox.warning(self, "tagexcel", tr("msg_chatbox_desc_too_long"))
+            return
+        self._name = name
+        self._description = desc
+        self.accept()
+
+    def get_workflow_name(self):
+        return getattr(self, "_name", "")
+
+    def get_workflow_description(self):
+        return getattr(self, "_description", "")
