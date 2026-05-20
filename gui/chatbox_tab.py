@@ -1,4 +1,5 @@
 import json
+from html import escape as _html_escape
 from pathlib import Path
 
 import pandas as pd
@@ -511,6 +512,16 @@ class ChatboxTab(QWidget):
             right_df = DataManager.load_file(file_path)
             right_df = self._parser_engine.parse(right_df)
             left_df = self._data_manager.df_working
+
+            if left_col not in left_df.columns:
+                raise ValueError(
+                    f"Column '{left_col}' not found in working dataframe"
+                )
+            if right_col not in right_df.columns:
+                raise ValueError(
+                    f"Column '{right_col}' not found in join file"
+                )
+
             merged = pd.merge(
                 left_df, right_df,
                 left_on=left_col, right_on=right_col, how=how,
@@ -662,8 +673,11 @@ class ChatboxTab(QWidget):
         self._chat_display.moveCursor(
             self._chat_display.textCursor().MoveOperation.End
         )
-        safe = message.replace("\n", "<br>")
-        self._chat_display.insertHtml(f"<p><b>{sender}:</b> {safe}</p>")
+        safe_sender = _html_escape(sender)
+        safe_msg = _html_escape(message).replace("\n", "<br>")
+        self._chat_display.insertHtml(
+            f"<p><b>{safe_sender}:</b> {safe_msg}</p>"
+        )
         self._chat_display.moveCursor(
             self._chat_display.textCursor().MoveOperation.End
         )
