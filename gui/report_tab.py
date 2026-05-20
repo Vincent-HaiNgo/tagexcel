@@ -41,6 +41,12 @@ class ReportTab(QWidget):
         row1.addWidget(self._btn_create)
         row1.addWidget(self._lbl_status)
         row1.addStretch()
+        self._lbl_export_hint = QLabel(tr("lbl_export_hint"))
+        hint_font = self._lbl_export_hint.font()
+        hint_font.setItalic(True)
+        hint_font.setPointSize(9)
+        self._lbl_export_hint.setFont(hint_font)
+        row1.addWidget(self._lbl_export_hint)
         self._btn_export = QPushButton(tr("btn_export"))
         self._btn_export.setEnabled(False)
         row1.addWidget(self._btn_export)
@@ -65,6 +71,7 @@ class ReportTab(QWidget):
     def retranslate_ui(self):
         self._btn_create.setText(tr("dlg_report_title"))
         self._btn_export.setText(tr("btn_export"))
+        self._lbl_export_hint.setText(tr("lbl_export_hint"))
         self._refresh_ui()
 
     def _refresh_ui(self):

@@ -36,6 +36,12 @@ class ParsingTab(QWidget):
         btn_layout.addWidget(self._btn_ai_parse)
         btn_layout.addWidget(self._lbl_status)
         btn_layout.addStretch()
+        self._lbl_export_hint = QLabel(tr("lbl_export_hint"))
+        hint_font = self._lbl_export_hint.font()
+        hint_font.setItalic(True)
+        hint_font.setPointSize(9)
+        self._lbl_export_hint.setFont(hint_font)
+        btn_layout.addWidget(self._lbl_export_hint)
         self._btn_export = QPushButton(tr("btn_export"))
         btn_layout.addWidget(self._btn_export)
 
@@ -58,6 +64,7 @@ class ParsingTab(QWidget):
         self._btn_app_parse.setText(tr("btn_app_parsing"))
         self._btn_ai_parse.setText(tr("btn_ai_parsing"))
         self._btn_export.setText(tr("btn_export"))
+        self._lbl_export_hint.setText(tr("lbl_export_hint"))
         self._log_view.retranslate_ui()
 
     def _check_has_data(self):

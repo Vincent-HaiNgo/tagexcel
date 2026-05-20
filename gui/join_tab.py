@@ -43,6 +43,12 @@ class JoinTab(QWidget):
         row1.addWidget(self._btn_browse)
         row1.addWidget(self._lbl_file)
         row1.addStretch()
+        self._lbl_export_hint = QLabel(tr("lbl_export_hint"))
+        hint_font = self._lbl_export_hint.font()
+        hint_font.setItalic(True)
+        hint_font.setPointSize(9)
+        self._lbl_export_hint.setFont(hint_font)
+        row1.addWidget(self._lbl_export_hint)
         self._btn_export = QPushButton(tr("btn_export"))
         row1.addWidget(self._btn_export)
 
@@ -135,6 +141,7 @@ class JoinTab(QWidget):
     def retranslate_ui(self):
         self._btn_browse.setText(tr("btn_browse_join_file"))
         self._btn_export.setText(tr("btn_export"))
+        self._lbl_export_hint.setText(tr("lbl_export_hint"))
         self._btn_ask_ai.setText(tr("btn_ask_ai_join"))
         self._ai_recommendation.setPlaceholderText(tr("ph_ai_join_plan"))
         self._lbl_merge_type.setText(tr("lbl_merge_type"))

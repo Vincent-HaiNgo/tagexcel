@@ -38,6 +38,12 @@ class PivotTab(QWidget):
         row1.addWidget(self._btn_create)
         row1.addWidget(self._lbl_status)
         row1.addStretch()
+        self._lbl_export_hint = QLabel(tr("lbl_export_hint"))
+        hint_font = self._lbl_export_hint.font()
+        hint_font.setItalic(True)
+        hint_font.setPointSize(9)
+        self._lbl_export_hint.setFont(hint_font)
+        row1.addWidget(self._lbl_export_hint)
         self._btn_export = QPushButton(tr("btn_export"))
         row1.addWidget(self._btn_export)
         layout.addLayout(row1)
@@ -59,6 +65,7 @@ class PivotTab(QWidget):
     def retranslate_ui(self):
         self._btn_create.setText(tr("btn_create_pivot"))
         self._btn_export.setText(tr("btn_export"))
+        self._lbl_export_hint.setText(tr("lbl_export_hint"))
         self._refresh_ui()
 
     def _refresh_ui(self):

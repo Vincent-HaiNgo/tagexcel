@@ -29,6 +29,12 @@ class DashboardTab(QWidget):
         self._btn_export.setEnabled(False)
         row1.addWidget(self._btn_refresh)
         row1.addStretch()
+        self._lbl_export_hint = QLabel(tr("lbl_export_hint"))
+        hint_font = self._lbl_export_hint.font()
+        hint_font.setItalic(True)
+        hint_font.setPointSize(9)
+        self._lbl_export_hint.setFont(hint_font)
+        row1.addWidget(self._lbl_export_hint)
         row1.addWidget(self._btn_export)
         layout.addLayout(row1)
 
@@ -49,6 +55,7 @@ class DashboardTab(QWidget):
     def retranslate_ui(self):
         self._btn_refresh.setText(tr("btn_refresh"))
         self._btn_export.setText(tr("btn_export"))
+        self._lbl_export_hint.setText(tr("lbl_export_hint"))
         self._refresh_ui()
 
     def _refresh_ui(self):

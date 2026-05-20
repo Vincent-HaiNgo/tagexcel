@@ -36,6 +36,12 @@ class CleanupTab(QWidget):
         row1.addWidget(self._lbl_dup_info)
         row1.addWidget(self._lbl_status)
         row1.addStretch()
+        self._lbl_export_hint = QLabel(tr("lbl_export_hint"))
+        hint_font = self._lbl_export_hint.font()
+        hint_font.setItalic(True)
+        hint_font.setPointSize(9)
+        self._lbl_export_hint.setFont(hint_font)
+        row1.addWidget(self._lbl_export_hint)
         self._btn_export = QPushButton(tr("btn_export"))
         row1.addWidget(self._btn_export)
 
@@ -75,6 +81,7 @@ class CleanupTab(QWidget):
         self._btn_delete.setText(tr("btn_delete_data"))
         self._btn_undo.setText(tr("btn_undo_delete"))
         self._btn_export.setText(tr("btn_export"))
+        self._lbl_export_hint.setText(tr("lbl_export_hint"))
         self._refresh_ui()
 
     def _refresh_ui(self):
