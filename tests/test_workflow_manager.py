@@ -50,6 +50,11 @@ def test_get_workflow_by_id(wm):
     assert wf["description"] == "desc1"
 
 
+def test_get_workflow_nonexistent_id(wm):
+    wf = wm.get_workflow(9999)
+    assert wf is None
+
+
 def test_get_workflow_order(wm):
     ops = '[{}]'
     wm.save_workflow("First", "d1", ops)

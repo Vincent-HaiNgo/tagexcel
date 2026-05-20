@@ -53,7 +53,7 @@ class WorkflowManager:
             for r in rows
         ]
 
-    def get_workflow(self, workflow_id: int) -> dict:
+    def get_workflow(self, workflow_id: int) -> dict | None:
         row = self._conn.execute(
             """SELECT id, name, description, operations_json, session_id, created_at
                FROM workflows WHERE id = ?""",
