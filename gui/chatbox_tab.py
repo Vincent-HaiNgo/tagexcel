@@ -270,9 +270,7 @@ class ChatboxTab(QWidget):
             bg = "#ffffff"
             text_color = "#1a1a1a"
         self._chat_display.setStyleSheet(
-            f"QTextEdit {{ background-color: {bg}; color: {text_color}; "
-            "border: 1px solid #ccc; border-radius: 4px; padding: 8px; "
-            "font-size: 13px; }}"
+            f"QTextEdit {{ background-color: {bg}; color: {text_color}; }}"
         )
 
     def _show_welcome_hint(self):
@@ -709,13 +707,15 @@ class ChatboxTab(QWidget):
     def _append_chat(self, sender: str, message: str):
         cursor = self._chat_display.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
+        cursor.insertBlock()
         safe_sender = _html_escape(sender)
         safe_msg = _html_escape(message).replace("\n", "<br>")
         self._chat_display.setTextCursor(cursor)
         self._chat_display.insertHtml(
-            f"<div style='margin:6px 0 10px 0;'>"
             f"<b>{safe_sender}:</b> {safe_msg}"
-            f"</div>"
+        )
+        self._chat_display.verticalScrollBar().setValue(
+            self._chat_display.verticalScrollBar().maximum()
         )
 
     # ---------- History and Workflow buttons ----------
