@@ -707,7 +707,8 @@ class ChatboxTab(QWidget):
     def _append_chat(self, sender: str, message: str):
         cursor = self._chat_display.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
-        cursor.insertBlock()
+        if cursor.position() > 0:
+            cursor.insertBlock()
         safe_sender = _html_escape(sender)
         safe_msg = _html_escape(message).replace("\n", "<br>")
         self._chat_display.setTextCursor(cursor)
