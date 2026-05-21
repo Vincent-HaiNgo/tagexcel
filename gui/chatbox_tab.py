@@ -494,7 +494,7 @@ class ChatboxTab(QWidget):
             df = self._data_manager.df_working
             if df is None:
                 raise ValueError("No data to parse.")
-            df_clean = self._parser_engine.parse(df)
+            df_clean, _ = self._parser_engine.parse(df)
             self._data_manager.update_working(df_clean)
             self._display_output(None)
 
@@ -512,7 +512,7 @@ class ChatboxTab(QWidget):
                 raise ValueError(f"Unsupported file format: {ext}")
 
             right_df = DataManager.load_file(file_path)
-            right_df = self._parser_engine.parse(right_df)
+            right_df, _ = self._parser_engine.parse(right_df)
             left_df = self._data_manager.df_working
 
             if left_col not in left_df.columns:
