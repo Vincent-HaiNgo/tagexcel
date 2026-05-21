@@ -246,6 +246,9 @@ class ChatboxTab(QWidget):
             bool(self._data_manager.get_loaded_files())
         )
         self._btn_export.setEnabled(has_data)
+        self._apply_chat_theme()
+        if not self._chat_display.toPlainText().strip():
+            self._show_welcome_hint()
 
     def _set_busy(self, busy):
         self._busy = busy
@@ -256,6 +259,27 @@ class ChatboxTab(QWidget):
         )
         self._btn_export.setEnabled(
             not busy and self._data_manager.df_working is not None
+        )
+
+    def _apply_chat_theme(self):
+        theme = QSettings("tagexcel", "tagexcel").value("theme", "light")
+        if theme == "dark":
+            bg = "#0a1628"
+            text_color = "#d0d8e8"
+        else:
+            bg = "#ffffff"
+            text_color = "#1a1a1a"
+        self._chat_display.setStyleSheet(
+            f"QTextEdit {{ background-color: {bg}; color: {text_color}; "
+            "border: 1px solid #ccc; border-radius: 4px; padding: 8px; "
+            "font-size: 13px; }}"
+        )
+
+    def _show_welcome_hint(self):
+        self._chat_display.clear()
+        self._chat_display.setHtml(
+            f"<p style='color:#888; font-style:italic; padding:16px;'>"
+            f"{_html_escape(tr('msg_chatbox_welcome_hint'))}</p>"
         )
 
     def refresh(self):
@@ -383,14 +407,16 @@ class ChatboxTab(QWidget):
                     lines = lines[:-1]
                 content = "\n".join(lines).strip()
 
-            plan_data = _extract_json_plan(content)
+                plan_data = _extract_json_plan(content)
 
             if plan_data and isinstance(plan_data.get("plan"), list):
                 plan = plan_data["plan"]
-                desc = plan_data.get("description", "Operation plan")
+                desc = plan_data.get(
+                    "description", tr("msg_chatbox_operation_plan")
+                )
                 ops_json = json.dumps(plan, ensure_ascii=False)
 
-                plan_text = f"{desc}\n\nPlan:\n"
+                plan_text = f"{desc}\n\n{tr('lbl_chatbox_plan')}:\n"
                 for step in plan:
                     action = step.get("action", "?")
                     params = step.get("params", {})
@@ -636,7 +662,8 @@ class ChatboxTab(QWidget):
             columns = params.get("columns", [])
             functions = params.get("functions", [])
             group_by = params.get("group_by")
-            rate = float(params.get("rate", 10.0))
+            rate_val = params.get("rate")
+            rate = float(rate_val) if rate_val is not None else 10.0
             valid_cols = [c for c in columns if c in df.columns]
             if not valid_cols or not functions:
                 raise ValueError(
@@ -686,7 +713,7 @@ class ChatboxTab(QWidget):
         safe_sender = _html_escape(sender)
         safe_msg = _html_escape(message).replace("\n", "<br>")
         self._chat_display.insertHtml(
-            f"<p><b>{safe_sender}:</b> {safe_msg}</p>"
+            f"<p style='margin:4px 0 8px 0;'><b>{safe_sender}:</b> {safe_msg}</p>"
         )
         self._chat_display.moveCursor(
             self._chat_display.textCursor().MoveOperation.End
@@ -753,8 +780,9 @@ class ChatboxTab(QWidget):
                 try:
                     plan = json.loads(wf["operations_json"])
                     plan_text = (
-                        f"Workflow: {wf['name']}\n"
-                        f"{wf['description']}\n\nPlan:\n"
+                        f"{tr('lbl_chatbox_workflow')}: {wf['name']}\n"
+                        f"{wf['description']}\n\n"
+                        f"{tr('lbl_chatbox_plan')}:\n"
                     )
                     for step in plan:
                         action = step.get("action", "?")
@@ -772,7 +800,7 @@ class ChatboxTab(QWidget):
                 except json.JSONDecodeError:
                     QMessageBox.warning(
                         self, "tagexcel",
-                        "Failed to parse workflow operations.",
+                        tr("msg_chatbox_parse_workflow_fail"),
                     )
 
     def _on_create_workflow(self):

@@ -229,6 +229,11 @@ EN = {
     "ph_chatbox_input": "Ask me to clean, analyze, pivot, report...",
     "msg_confirm_delete_sessions": "Delete {count} selected session(s)?",
     "msg_confirm_delete_workflow": "Delete this workflow?",
+    "msg_chatbox_welcome_hint": "You can chat with me to perform tasks similar to those in the other tabs (e.g., Add File, Parsing, Cleanup, Report, Dashboard...). Which task would you like me to do?",
+    "lbl_chatbox_plan": "Plan",
+    "lbl_chatbox_workflow": "Workflow",
+    "msg_chatbox_operation_plan": "Operation plan",
+    "msg_chatbox_parse_workflow_fail": "Failed to parse workflow operations.",
 }
 VI = {
     "app_title": "tagexcel",
@@ -460,6 +465,11 @@ VI = {
     "ph_chatbox_input": "Y\u00eau c\u1ea7u t\u00f4i l\u00e0m s\u1ea1ch, ph\u00e2n t\u00edch, pivot, b\u00e1o c\u00e1o...",
     "msg_confirm_delete_sessions": "X\u00f3a {count} phi\u00ean \u0111\u00e3 ch\u1ecdn?",
     "msg_confirm_delete_workflow": "X\u00f3a quy tr\u00ecnh n\u00e0y?",
+    "msg_chatbox_welcome_hint": "B\u1ea1n c\u00f3 th\u1ec3 tr\u00f2 chuy\u1ec7n v\u1edbi t\u00f4i \u0111\u1ec3 th\u1ef1c hi\u1ec7n c\u00e1c t\u00e1c v\u1ee5 t\u01b0\u01a1ng t\u1ef1 nh\u01b0 trong c\u00e1c tab kh\u00e1c (v\u00ed d\u1ee5: Th\u00eam T\u1ec7p, Tinh ch\u1ec9nh Data, L\u00e0m s\u1ea1ch, B\u00e1o c\u00e1o, B\u1ea3ng \u0111i\u1ec1u khi\u1ec3n...). B\u1ea1n mu\u1ed1n t\u00f4i l\u00e0m t\u00e1c v\u1ee5 g\u00ec?",
+    "lbl_chatbox_plan": "K\u1ebf ho\u1ea1ch",
+    "lbl_chatbox_workflow": "Quy tr\u00ecnh",
+    "msg_chatbox_operation_plan": "K\u1ebf ho\u1ea1ch thao t\u00e1c",
+    "msg_chatbox_parse_workflow_fail": "Kh\u00f4ng th\u1ec3 ph\u00e2n t\u00edch thao t\u00e1c quy tr\u00ecnh.",
 }
 
 
