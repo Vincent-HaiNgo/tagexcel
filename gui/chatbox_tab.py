@@ -278,8 +278,8 @@ class ChatboxTab(QWidget):
     def _show_welcome_hint(self):
         self._chat_display.clear()
         self._chat_display.setHtml(
-            f"<p style='color:#888; font-style:italic; padding:16px;'>"
-            f"{_html_escape(tr('msg_chatbox_welcome_hint'))}</p>"
+            f"<div style='color:#888; font-style:italic; padding:16px;'>"
+            f"{_html_escape(tr('msg_chatbox_welcome_hint'))}</div>"
         )
 
     def refresh(self):
@@ -407,7 +407,7 @@ class ChatboxTab(QWidget):
                     lines = lines[:-1]
                 content = "\n".join(lines).strip()
 
-                plan_data = _extract_json_plan(content)
+            plan_data = _extract_json_plan(content)
 
             if plan_data and isinstance(plan_data.get("plan"), list):
                 plan = plan_data["plan"]
@@ -707,16 +707,15 @@ class ChatboxTab(QWidget):
     # ---------- Chat display ----------
 
     def _append_chat(self, sender: str, message: str):
-        self._chat_display.moveCursor(
-            self._chat_display.textCursor().MoveOperation.End
-        )
+        cursor = self._chat_display.textCursor()
+        cursor.movePosition(cursor.MoveOperation.End)
         safe_sender = _html_escape(sender)
         safe_msg = _html_escape(message).replace("\n", "<br>")
+        self._chat_display.setTextCursor(cursor)
         self._chat_display.insertHtml(
-            f"<p style='margin:4px 0 8px 0;'><b>{safe_sender}:</b> {safe_msg}</p>"
-        )
-        self._chat_display.moveCursor(
-            self._chat_display.textCursor().MoveOperation.End
+            f"<div style='margin:6px 0 10px 0;'>"
+            f"<b>{safe_sender}:</b> {safe_msg}"
+            f"</div>"
         )
 
     # ---------- History and Workflow buttons ----------
