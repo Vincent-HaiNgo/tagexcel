@@ -377,8 +377,10 @@ class DashboardTab(QWidget):
             return
         if not self._ai_client or not self._ai_client.is_configured:
             self._display(
-                f"<p style='color:#e74c3c;text-align:center;padding:20px;'>"
-                f"{tr('msg_ai_join_not_configured')}</p>"
+                blank_page(self._get_theme(),
+                    f"<p style='color:#e74c3c;text-align:center;padding:20px;'>"
+                    f"{tr('msg_ai_join_not_configured')}</p>"
+                )
             )
             return
 
@@ -386,8 +388,10 @@ class DashboardTab(QWidget):
             self._highlight_button(clicked_btn)
 
         self._display(
-            f"<p style='color:#e74c3c;text-align:center;padding:40px;font-size:15px;'>"
-            f"{tr('msg_chatbox_thinking')}</p>"
+            blank_page(self._get_theme(),
+                f"<p style='color:#e74c3c;text-align:center;padding:40px;font-size:15px;'>"
+                f"{tr('msg_chatbox_thinking')}</p>"
+            )
         )
 
         prompts = _CATEGORY_PROMPTS.get(category, {})
@@ -422,8 +426,10 @@ class DashboardTab(QWidget):
             self._has_output = False
             self._status.error(f"Error: {str(e)}")
             self._display(
-                f"<p style='color:#e74c3c;text-align:center;padding:20px;'>"
-                f"Error: {str(e)}</p>"
+                blank_page(self._get_theme(),
+                    f"<p style='color:#e74c3c;text-align:center;padding:20px;'>"
+                    f"Error: {str(e)}</p>"
+                )
             )
         finally:
             for btn in self._cat_buttons:
