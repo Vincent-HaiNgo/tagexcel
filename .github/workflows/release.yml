@@ -27,7 +27,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build with PyInstaller
-        run: pyinstaller --noconsole --name "tagexcel" --add-data "assets;assets" --hidden-import "PyQt6.QtCore" --hidden-import "PyQt6.QtGui" --hidden-import "PyQt6.QtWidgets" --hidden-import "pandas" --hidden-import "numpy" --hidden-import "openpyxl" --hidden-import "matplotlib" --hidden-import "requests" --hidden-import "python_calamine" --hidden-import "xlrd" main.py
+        run: pyinstaller --noconsole --name "tagexcel" --add-data "assets;assets" --hidden-import "PyQt6.QtCore" --hidden-import "PyQt6.QtGui" --hidden-import "PyQt6.QtWidgets" --hidden-import "PyQt6.QtWebEngineWidgets" --hidden-import "PyQt6.QtWebEngineCore" --hidden-import "pandas" --hidden-import "numpy" --hidden-import "openpyxl" --hidden-import "matplotlib" --hidden-import "requests" --hidden-import "python_calamine" --hidden-import "xlrd" main.py
 
       - name: Package portable build
         run: Compress-Archive -Path "dist\tagexcel\*" -DestinationPath "dist\tagexcel-${{ github.ref_name }}.zip"
