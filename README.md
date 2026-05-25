@@ -27,17 +27,11 @@ A desktop data processing application for Windows 10/11. Load, clean, analyze, t
 
 ## Installation
 
-### Option 1: Download Installer (Recommended)
+### Option 1: Portable Build (Recommended)
 
-Download the latest installer from [Releases](https://github.com/tagexcel/tagexcel/releases).
+Download the latest zip from [Releases](https://github.com/Vincent-HaiNgo/tagexcel/releases), extract it, and double-click `tagexcel.exe`.
 
-Run `tagexcel-v1.0.0-setup.exe` and follow the wizard.
-
-### Option 2: Portable Build
-
-Download `tagexcel-v1.0.0.zip` from [Releases](https://github.com/tagexcel/tagexcel/releases), extract it, and double-click `tagexcel.exe`.
-
-### Option 3: Run from Source
+### Option 2: Run from Source
 
 ```bash
 python -m venv venv
