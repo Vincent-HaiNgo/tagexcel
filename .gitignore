@@ -2,3 +2,12 @@ __pycache__/
 *.pyc
 *.xlsx
 *.xls
+venv/
+dist/
+build/
+*.spec
+.env
+*.exe
+*.zip
+*.nsi
+*.ico
