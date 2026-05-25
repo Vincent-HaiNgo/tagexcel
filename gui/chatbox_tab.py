@@ -22,6 +22,7 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 
 from utils.i18n import tr, get_language
 from utils.config import SUPPORTED_EXTENSIONS, DATA_DIR
+from utils.html_templates import blank_page
 from utils.export_utils import export_dataframe
 from utils.status_utils import StatusHelper
 from utils.shared import strip_code_fence, try_parse_json_plan, build_df_schema, BASE_URL
@@ -138,6 +139,7 @@ class ChatboxTab(QWidget):
 
         self._output = QWebEngineView()
         self._output.setMinimumHeight(60)
+        self._output.setHtml(blank_page(self._get_theme()), BASE_URL)
         left_layout.addWidget(self._output, 2)
 
         self._hsplit.addWidget(left_panel)
@@ -214,7 +216,7 @@ class ChatboxTab(QWidget):
         )
 
     def _display_clear(self):
-        self._output.setHtml("", BASE_URL)
+        self._output.setHtml(blank_page(self._get_theme()), BASE_URL)
 
     # ---------- UI refresh ----------
 

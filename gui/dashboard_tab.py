@@ -18,7 +18,7 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from utils.i18n import tr, get_language
 from utils.export_utils import save_html_file
 from utils.status_utils import StatusHelper
-from utils.html_templates import wrap_ai_html, _AI_STYLE_GUIDE_EN, _AI_STYLE_GUIDE_VI
+from utils.html_templates import wrap_ai_html, _AI_STYLE_GUIDE_EN, _AI_STYLE_GUIDE_VI, blank_page
 from utils.shared import strip_code_fence, BASE_URL, build_df_schema
 from gui.table_view import PaginatedTableView
 from core.dashboard_engine import (
@@ -355,14 +355,20 @@ class DashboardTab(QWidget):
             if self._active_button is not None:
                 self._active_button.setStyleSheet("")
                 self._active_button = None
+            theme = self._get_theme()
             self._display(
-                f"<p style='color:#888;font-size:14px;text-align:center;padding:40px;'>"
-                f"{tr('dash_hint_no_data')}</p>"
+                blank_page(theme,
+                    f"<p style='color:#888;font-size:14px;text-align:center;padding:40px;'>"
+                    f"{tr('dash_hint_no_data')}</p>"
+                )
             )
         elif not self._has_output:
+            theme = self._get_theme()
             self._display(
-                f"<p style='color:#888;font-size:14px;text-align:center;padding:40px;'>"
-                f"{tr('dash_hint_choose')}</p>"
+                blank_page(theme,
+                    f"<p style='color:#888;font-size:14px;text-align:center;padding:40px;'>"
+                    f"{tr('dash_hint_choose')}</p>"
+                )
             )
 
     def _on_category(self, category, clicked_btn=None):

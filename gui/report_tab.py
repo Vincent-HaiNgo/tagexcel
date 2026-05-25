@@ -15,7 +15,7 @@ from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 
 from utils.i18n import tr, get_language
-from utils.html_templates import wrap_ai_html, _AI_STYLE_GUIDE_EN, _AI_STYLE_GUIDE_VI
+from utils.html_templates import wrap_ai_html, _AI_STYLE_GUIDE_EN, _AI_STYLE_GUIDE_VI, blank_page
 from utils.export_utils import save_html_file
 from utils.status_utils import StatusHelper
 from utils.shared import strip_code_fence, BASE_URL
@@ -80,7 +80,7 @@ class ReportTab(QWidget):
         )
 
     def _display_clear(self):
-        self._output.setHtml("", BASE_URL)
+        self._output.setHtml(blank_page(self._get_theme()), BASE_URL)
 
     def retranslate_ui(self):
         self._btn_create.setText(tr("dlg_report_title"))

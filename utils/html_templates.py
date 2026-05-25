@@ -181,6 +181,10 @@ def wrap_ai_html(raw_html, title, theme="light"):
     return page_start(title, theme) + s + page_end()
 
 
+def blank_page(theme, body_content=""):
+    return page_start("", theme) + body_content + page_end()
+
+
 _AI_STYLE_GUIDE_EN = """
 
 --- DESIGN SYSTEM ---
