@@ -114,10 +114,16 @@ def _apply_function(col_data, func_name, rate=0.1):
     elif func_name == "payback":
         return _compute_payback(drop)
     elif func_name == "fv":
-        n = len(drop_num)
-        return round(float(sum(drop_num.iloc[i] * (1 + rate) ** (n - i - 1) for i in range(n))), 2)
+        try:
+            n = len(drop_num)
+            return round(float(sum(drop_num.iloc[i] * (1 + rate) ** (n - i - 1) for i in range(n))), 2)
+        except (OverflowError, ValueError):
+            return None
     elif func_name == "pv":
-        return round(float(sum(drop_num.iloc[i] / (1 + rate) ** i for i in range(len(drop_num)))), 2)
+        try:
+            return round(float(sum(drop_num.iloc[i] / (1 + rate) ** i for i in range(len(drop_num)))), 2)
+        except (OverflowError, ValueError):
+            return None
     return None
 
 

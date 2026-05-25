@@ -7,3 +7,4 @@ CREDS_FILE = DATA_DIR / "creds.enc"
 PAGE_SIZE = 100
 MAX_PIVOT_CELLS = 5_000_000
 SUPPORTED_EXTENSIONS = (".xls", ".xlsx", ".csv")
+AI_TIMEOUT = 180

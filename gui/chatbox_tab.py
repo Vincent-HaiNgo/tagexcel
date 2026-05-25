@@ -18,11 +18,13 @@ from PyQt6.QtWidgets import (
     QDialog,
 )
 from PyQt6.QtCore import Qt, QSettings
+from PyQt6.QtWebEngineWidgets import QWebEngineView
 
 from utils.i18n import tr, get_language
 from utils.config import SUPPORTED_EXTENSIONS, DATA_DIR
 from utils.export_utils import export_dataframe
 from utils.status_utils import StatusHelper
+from utils.shared import strip_code_fence, try_parse_json_plan, build_df_schema, BASE_URL
 from core.data_manager import DataManager
 from core.chat_history_db import ChatHistoryDB
 from core.workflow_manager import WorkflowManager
@@ -84,30 +86,6 @@ Quy t\u1eafc:
 5. M\u00f4 t\u1ea3 ng\u1eafn g\u1ecdn. Kh\u00f4ng th\u00eam v\u0103n b\u1ea3n n\u00e0o ngo\u00e0i JSON khi tr\u1ea3 v\u1ec1 k\u1ebf ho\u1ea1ch."""
 
 
-def _extract_json_plan(text: str) -> dict | None:
-    for i, ch in enumerate(text):
-        if ch != "{":
-            continue
-        depth = 0
-        end = -1
-        for j in range(i, len(text)):
-            if text[j] == "{":
-                depth += 1
-            elif text[j] == "}":
-                depth -= 1
-                if depth == 0:
-                    end = j + 1
-                    break
-        if end > i:
-            try:
-                obj = json.loads(text[i:end])
-                if "plan" in obj and isinstance(obj["plan"], list):
-                    return obj
-            except json.JSONDecodeError:
-                continue
-    return None
-
-
 class ChatboxTab(QWidget):
     def __init__(self, data_manager, parser_engine, ai_client, parent=None):
         super().__init__(parent)
@@ -150,16 +128,19 @@ class ChatboxTab(QWidget):
         # --- Split: left 2/3 output, right 1/3 chat ---
         self._hsplit = QSplitter(Qt.Orientation.Horizontal)
 
-        # Left side: df_working table + non-tabular output
-        self._vsplit_left = QSplitter(Qt.Orientation.Vertical)
+        # Left side: df_working table (stretch 1) + output area (stretch 2)
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+
         self._table = PaginatedTableView()
-        self._output = QTextEdit()
-        self._output.setReadOnly(True)
-        self._vsplit_left.addWidget(self._table)
-        self._vsplit_left.addWidget(self._output)
-        self._vsplit_left.setStretchFactor(0, 1)
-        self._vsplit_left.setStretchFactor(1, 2)
-        self._hsplit.addWidget(self._vsplit_left)
+        left_layout.addWidget(self._table, 1)
+
+        self._output = QWebEngineView()
+        self._output.setMinimumHeight(60)
+        left_layout.addWidget(self._output, 2)
+
+        self._hsplit.addWidget(left_panel)
 
         # Right side: function buttons + chat area
         right_panel = QWidget()
@@ -223,6 +204,18 @@ class ChatboxTab(QWidget):
 
         self._refresh_ui()
 
+    def _display(self, html):
+        self._output.setHtml(html, BASE_URL)
+
+    def _display_text(self, text):
+        self._output.setHtml(
+            f"<pre style='font-family:monospace;white-space:pre-wrap;'>{_html_escape(text)}</pre>",
+            BASE_URL,
+        )
+
+    def _display_clear(self):
+        self._output.setHtml("", BASE_URL)
+
     # ---------- UI refresh ----------
 
     def retranslate_ui(self):
@@ -264,8 +257,8 @@ class ChatboxTab(QWidget):
     def _apply_chat_theme(self):
         theme = QSettings("tagexcel", "tagexcel").value("theme", "light")
         if theme == "dark":
-            bg = "#0a1628"
-            text_color = "#d0d8e8"
+            bg = "#002E63"
+            text_color = "white"
         else:
             bg = "#ffffff"
             text_color = "#1a1a1a"
@@ -282,6 +275,10 @@ class ChatboxTab(QWidget):
 
     def refresh(self):
         self._refresh_ui()
+
+    @staticmethod
+    def _get_theme():
+        return QSettings("tagexcel", "tagexcel").value("theme", "light")
 
     # ---------- File operations ----------
 
@@ -331,27 +328,6 @@ class ChatboxTab(QWidget):
 
     # ---------- AI interaction ----------
 
-    def _build_df_context(self) -> dict:
-        df = self._data_manager.df_working
-        columns_info = []
-        for col in df.columns:
-            col_data = df[col]
-            null_count = int(col_data.isna().sum())
-            unique_count = int(col_data.nunique())
-            samples = col_data.dropna().head(3).astype(str).tolist()
-            columns_info.append({
-                "name": str(col),
-                "dtype": str(col_data.dtype),
-                "unique_count": unique_count,
-                "null_count": null_count,
-                "samples": samples,
-            })
-        return {
-            "total_rows": len(df),
-            "total_columns": len(df.columns),
-            "columns": columns_info,
-        }
-
     def _on_send(self):
         if self._busy:
             return
@@ -375,7 +351,7 @@ class ChatboxTab(QWidget):
             )
             user_message = user_text
         else:
-            df_context = self._build_df_context()
+            df_context = build_df_schema(self._data_manager.df_working)
             doc = json.dumps(df_context, ensure_ascii=False, default=str)
             if get_language() == "VI":
                 system_prompt = CHATBOX_SYSTEM_PROMPT_VI.format(doc=doc)
@@ -393,19 +369,15 @@ class ChatboxTab(QWidget):
         self._lbl_status.setText(tr("msg_chatbox_thinking"))
         QApplication.processEvents()
 
+        thinking_pos = self._chat_display.textCursor().position()
+        self._append_chat("AI", tr("msg_chatbox_thinking"))
+        QApplication.processEvents()
+
         try:
             response = self._ai_client.chat(system_prompt, user_message)
-            content = response.strip()
+            content = strip_code_fence(response)
 
-            if content.startswith("```"):
-                lines = content.split("\n")
-                if lines and lines[0].startswith("```"):
-                    lines = lines[1:]
-                if lines and lines[-1].strip().startswith("```"):
-                    lines = lines[:-1]
-                content = "\n".join(lines).strip()
-
-            plan_data = _extract_json_plan(content)
+            plan_data = try_parse_json_plan(content)
 
             if plan_data and isinstance(plan_data.get("plan"), list):
                 plan = plan_data["plan"]
@@ -424,6 +396,7 @@ class ChatboxTab(QWidget):
                         f"{params_str}\n"
                     )
 
+                self._remove_thinking(thinking_pos)
                 self._append_chat("AI", plan_text)
                 mid = self._chat_db.add_message(
                     self._active_session_id,
@@ -437,6 +410,7 @@ class ChatboxTab(QWidget):
                 self._btn_accept.show()
                 self._btn_reject.show()
             else:
+                self._remove_thinking(thinking_pos)
                 self._append_chat("AI", content)
                 self._chat_db.add_message(
                     self._active_session_id, "assistant", content
@@ -448,6 +422,7 @@ class ChatboxTab(QWidget):
 
             self._lbl_status.setText("")
         except Exception as e:
+            self._remove_thinking(thinking_pos)
             self._append_chat(
                 "AI", tr("msg_chatbox_ai_fail").format(error=str(e))
             )
@@ -649,8 +624,7 @@ class ChatboxTab(QWidget):
             if df is None:
                 raise ValueError("No data to analyze.")
             stats = compute_statistics(df)
-            theme = QSettings("tagexcel", "tagexcel").value("theme", "light")
-            html = render_statistics_html(stats, df=df, theme=theme)
+            html = render_statistics_html(stats, df=df, theme=self._get_theme())
             self._display_output(html)
 
         elif action == "report":
@@ -674,8 +648,7 @@ class ChatboxTab(QWidget):
                 "rate": rate,
             }
             report = compute_report(df, config)
-            theme = QSettings("tagexcel", "tagexcel").value("theme", "light")
-            html = render_report_html(report, theme=theme)
+            html = render_report_html(report, theme=self._get_theme())
             self._display_output(html)
 
         elif action == "dashboard":
@@ -683,8 +656,7 @@ class ChatboxTab(QWidget):
             if df is None:
                 raise ValueError("No data for dashboard.")
             data = compute_dashboard(df)
-            theme = QSettings("tagexcel", "tagexcel").value("theme", "light")
-            html = render_dashboard_html(data, df=df, theme=theme)
+            html = render_dashboard_html(data, df=df, theme=self._get_theme())
             self._display_output(html)
 
         elif action == "export":
@@ -698,9 +670,9 @@ class ChatboxTab(QWidget):
 
     def _display_output(self, html):
         if html:
-            self._output.setHtml(html)
+            self._display(html)
         else:
-            self._output.clear()
+            self._display_clear()
 
     # ---------- Chat display ----------
 
@@ -718,6 +690,12 @@ class ChatboxTab(QWidget):
         self._chat_display.verticalScrollBar().setValue(
             self._chat_display.verticalScrollBar().maximum()
         )
+
+    def _remove_thinking(self, pos):
+        cursor = self._chat_display.textCursor()
+        cursor.setPosition(pos)
+        cursor.movePosition(cursor.MoveOperation.End, cursor.MoveMode.KeepAnchor)
+        cursor.removeSelectedText()
 
     # ---------- History and Workflow buttons ----------
 
@@ -738,7 +716,7 @@ class ChatboxTab(QWidget):
             if self._active_session_id in to_delete:
                 self._active_session_id = None
                 self._chat_display.clear()
-                self._output.clear()
+                self._display_clear()
 
         selected_id = dlg.get_selected_session_id()
         if selected_id:

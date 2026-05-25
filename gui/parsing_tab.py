@@ -73,11 +73,13 @@ class ParsingTab(QWidget):
             return False
         return True
 
-    def _start_busy(self, task_key):
-        self._status.working(tr("msg_status_working"))
-
-    def _end_busy(self):
-        self._status.done(tr("msg_status_done"))
+    def _set_busy(self, busy):
+        self._busy = busy
+        self._btn_app_parse.setEnabled(not busy)
+        self._btn_ai_parse.setEnabled(not busy)
+        self._btn_export.setEnabled(not busy)
+        if not busy:
+            self._status.clear()
 
     def _flush_ui(self):
         QApplication.processEvents()
@@ -94,7 +96,8 @@ class ParsingTab(QWidget):
         if not self._check_has_data():
             return
 
-        self._start_busy("msg_app_parsing_busy")
+        self._set_busy(True)
+        self._status.working(tr("msg_status_working"))
         self._log_view.append("--- App Parsing started ---")
         self._flush_ui()
 
@@ -108,8 +111,8 @@ class ParsingTab(QWidget):
             self._log_view.append(f"ERROR: {str(e)}")
             self._status.error(f"Error: {str(e)}")
         finally:
-            self._flush_ui()
-            self._end_busy()
+            self._set_busy(False)
+            self._status.done(tr("msg_status_done"))
 
     def _on_ai_parsing(self):
         if self._busy:
@@ -130,7 +133,8 @@ class ParsingTab(QWidget):
             )
             return
 
-        self._start_busy("msg_ai_parsing_busy")
+        self._set_busy(True)
+        self._status.working(tr("msg_status_working"))
 
         df = self._data_manager.df_working
         df_info = self._build_df_info(df)
@@ -151,7 +155,8 @@ class ParsingTab(QWidget):
             self._status.error(f"Error: {str(e)}")
             QMessageBox.warning(self, "tagexcel", tr("msg_ai_fail"))
             self._flush_ui()
-            self._end_busy()
+            self._set_busy(False)
+            self._status.done(tr("msg_status_done"))
             return
 
         try:
@@ -163,7 +168,8 @@ class ParsingTab(QWidget):
             self._status.error(f"Error: {str(e)}")
             QMessageBox.warning(self, "tagexcel", tr("msg_ai_bad_json"))
             self._flush_ui()
-            self._end_busy()
+            self._set_busy(False)
+            self._status.done(tr("msg_status_done"))
             return
 
         self._data_manager.update_working(df_clean)
@@ -178,7 +184,8 @@ class ParsingTab(QWidget):
         self._table.set_dataframe(df_clean)
         self._log_view.append("--- AI Parsing complete ---")
         self._flush_ui()
-        self._end_busy()
+        self._set_busy(False)
+        self._status.done(tr("msg_status_done"))
 
     def _build_df_info(self, df):
         columns = []

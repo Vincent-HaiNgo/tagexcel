@@ -1,4 +1,3 @@
-import json
 import re
 from datetime import datetime
 
@@ -9,6 +8,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from utils.chart_utils import fig_to_b64, chart_pie, chart_line, chart_scatter, chart_radar
+from utils.i18n import tr
 from utils.html_templates import (
     page_start,
     page_end,
@@ -310,12 +310,12 @@ def _chart_histogram(series, col_name):
         return ""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7, 2.5))
     ax1.hist(drop, bins=min(30, max(5, int(len(drop) ** 0.5))), color="#00897b", edgecolor="white", alpha=0.85)
-    ax1.set_title(f"{col_name} – Distribution", fontsize=9, fontweight="bold")
+    ax1.set_title(tr("lbl_analysis_chart_dist").format(col=col_name), fontsize=9, fontweight="bold")
     ax1.tick_params(labelsize=7)
     bp = ax2.boxplot(drop.dropna().values, vert=True, patch_artist=True,
                      boxprops=dict(facecolor="#4db6ac", alpha=0.7),
                      medianprops=dict(color="#e74c3c", linewidth=2))
-    ax2.set_title(f"{col_name} – Box Plot", fontsize=9, fontweight="bold")
+    ax2.set_title(tr("lbl_analysis_chart_boxplot").format(col=col_name), fontsize=9, fontweight="bold")
     ax2.tick_params(labelsize=7)
     ax2.set_xticklabels([])
     return fig_to_b64(fig)
@@ -331,7 +331,7 @@ def _chart_missing_bars(stats):
     colors = ["#e74c3c" if p >= 20 else "#f39c12" if p >= 5 else "#27ae60" for p in pcts]
     ax.barh(names, pcts, color=colors, edgecolor="white")
     ax.set_xlabel("Null %", fontsize=8)
-    ax.set_title("Missing Data by Column", fontsize=9, fontweight="bold")
+    ax.set_title(tr("lbl_analysis_chart_missing"), fontsize=9, fontweight="bold")
     ax.tick_params(labelsize=7)
     return fig_to_b64(fig)
 
@@ -351,25 +351,37 @@ def _chart_correlation_heatmap(corr):
         for j in range(len(cols)):
             ax.text(j, i, f"{matrix[i, j]:.1f}", ha="center", va="center", fontsize=6,
                     color="white" if abs(matrix[i, j]) > 0.5 else "black")
-    ax.set_title("Correlation Heatmap", fontsize=9, fontweight="bold")
+    ax.set_title(tr("lbl_analysis_chart_correlation"), fontsize=9, fontweight="bold")
     fig.colorbar(im, ax=ax, shrink=0.8)
     return fig_to_b64(fig)
 
 
-def _corr_color(val):
+def _corr_color(val, theme="light"):
     if val is None or (isinstance(val, float) and np.isnan(val)):
-        return "#e0e0e0"
+        return "#e0e0e0" if theme == "light" else "#3d3d3d"
     v = max(-1, min(1, val))
-    if v >= 0:
-        r = int(255 - v * (255 - 0))
-        g = int(255 - v * (255 - 137))
-        b = int(255 - v * (255 - 123))
+    if theme == "dark":
+        if v >= 0:
+            r = int(60 - v * 60)
+            g = int(60 + v * (137 - 60))
+            b = int(60 + v * (123 - 60))
+        else:
+            av = abs(v)
+            r = int(60 + av * (231 - 60))
+            g = int(60 - av * 60)
+            b = int(60 - av * 60)
+        return f"rgb({r},{g},{b})"
     else:
-        av = abs(v)
-        r = int(255 - av * (255 - 231))
-        g = int(255 - av * 179)
-        b = int(255 - av * 195)
-    return f"rgb({r},{g},{b})"
+        if v >= 0:
+            r = int(255 - v * (255 - 0))
+            g = int(255 - v * (255 - 137))
+            b = int(255 - v * (255 - 123))
+        else:
+            av = abs(v)
+            r = int(255 - av * (255 - 231))
+            g = int(255 - av * 179)
+            b = int(255 - av * 195)
+        return f"rgb({r},{g},{b})"
 
 
 def _null_badge(pct):
@@ -395,22 +407,22 @@ def render_statistics_html(stats, df=None, theme="light"):
     ct = stats["column_types"]
     mp = stats["missing_patterns"]
 
-    html = page_start("Statistical Analysis Report", theme)
-    html += "<h2>" + chr(9670) + " Statistical Analysis Report</h2>"
+    html = page_start(tr("lbl_analysis_title"), theme)
+    html += "<h2>" + chr(9670) + " " + tr("lbl_analysis_title") + "</h2>"
     html += timestamp_label(ts)
 
     dupes_color = "red" if ov["duplicates"] > 0 else "green"
     boxes = ""
-    boxes += col(stat_box(f"{ov['rows']:,}", "Rows", "teal", chr(9670), theme), width=3)
-    boxes += col(stat_box(str(ov["columns"]), "Columns", "blue", chr(9671), theme), width=3)
-    boxes += col(stat_box(f"{ov['memory_kb']:.0f} KB", "Memory", "green", chr(9679), theme), width=3)
-    boxes += col(stat_box(f"{ov['duplicates']:,} ({ov['duplicates_pct']}%)", "Duplicates", dupes_color, chr(9670), theme), width=3)
-    html += card(chr(9670) + " Overview", row(boxes), chr(9670), theme)
-    html += f'<p class="muted">Missing cells: {ov["missing_cells"]:,} ({ov["missing_cells_pct"]}% of all cells)</p>'
+    boxes += col(stat_box(f"{ov['rows']:,}", tr("lbl_analysis_rows"), "teal", chr(9670), theme), width=3)
+    boxes += col(stat_box(str(ov["columns"]), tr("lbl_analysis_cols_count"), "blue", chr(9671), theme), width=3)
+    boxes += col(stat_box(f"{ov['memory_kb']:.0f} KB", tr("lbl_analysis_memory"), "green", chr(9679), theme), width=3)
+    boxes += col(stat_box(f"{ov['duplicates']:,} ({ov['duplicates_pct']}%)", tr("lbl_analysis_duplicates"), dupes_color, chr(9670), theme), width=3)
+    html += card(chr(9670) + " " + tr("lbl_analysis_overview"), row(boxes), chr(9670), theme)
+    html += f'<p class="muted">' + tr("lbl_analysis_missing_cells").format(count=f"{ov['missing_cells']:,}", pct=ov["missing_cells_pct"]) + '</p>'
 
-    type_headers = ["Type", "Count"]
+    type_headers = [tr("lbl_analysis_type"), tr("lbl_analysis_count")]
     type_rows = [[dtype.capitalize(), str(count)] for dtype, count in ct.items()]
-    html += card(chr(9671) + " Column Types", styled_table(type_headers, type_rows, theme), chr(9671), theme)
+    html += card(chr(9671) + " " + tr("lbl_analysis_columns"), styled_table(type_headers, type_rows, theme), chr(9671), theme)
 
     mp_content = row("")
     mp_left = ""
@@ -420,27 +432,30 @@ def render_statistics_html(stats, df=None, theme="light"):
             mp_left += f'<img src="{missing_img}" style="max-width:100%;" alt="Missing data chart">'
     mp_right = ""
     if mp["top_null_columns"]:
-        mp_right += "<b>Top columns by null %:</b>"
-        nh = ["Column", "Nulls", "%"]
+        mp_right += "<b>" + tr("lbl_analysis_top_null_cols") + "</b>"
+        nh = [tr("lbl_analysis_column"), tr("lbl_analysis_nulls"), tr("lbl_analysis_pct")]
         nr = [[name, f"{cnt:,}", _null_badge(pct)] for name, cnt, pct in mp["top_null_columns"]]
         mp_right += styled_table(nh, nr, theme)
     if mp["top_null_rows"]:
-        mp_right += "<br><b>Top rows by null count:</b>"
-        rh = ["Row #", "Nulls"]
+        mp_right += "<br><b>" + tr("lbl_analysis_top_null_rows") + "</b>"
+        rh = [tr("lbl_analysis_row_num"), tr("lbl_analysis_nulls")]
         rr = [[str(idx), str(cnt)] for idx, cnt in mp["top_null_rows"]]
         mp_right += styled_table(rh, rr, theme)
     if not mp_right:
-        mp_right += "<p>No missing values found.</p>"
+        mp_right += "<p>" + tr("lbl_analysis_no_missing") + "</p>"
 
     mp_content = ""
     mp_content += col(mp_left, width=6)
     mp_content += col(mp_right, width=6)
-    html += card(chr(9650) + " Missing Patterns", row(mp_content), chr(9650), theme)
+    html += card(chr(9650) + " " + tr("lbl_analysis_missing"), row(mp_content), chr(9650), theme)
 
-    html += section_header("Per-Column Analysis", chr(9632), theme)
+    html += section_header(tr("lbl_analysis_per_column"), chr(9632), theme)
     col_headers = [
-        "Column", "Dtype", "Nulls", "Null%", "Unique", "Unique%",
-        "Min", "Max", "Mean", "Median", "Std", "Q1", "Q3", "IQR", "Skew", "Kurt", "Outliers", "Top Values",
+        tr("lbl_analysis_column"), tr("lbl_analysis_dtype"), tr("lbl_analysis_nulls"), tr("lbl_analysis_nullpct"),
+        tr("lbl_analysis_unique"), tr("lbl_analysis_uniquepct"),
+        tr("lbl_analysis_min"), tr("lbl_analysis_max"), tr("lbl_analysis_mean"), tr("lbl_analysis_median"),
+        tr("lbl_analysis_std"), tr("lbl_analysis_q1"), tr("lbl_analysis_q3"), tr("lbl_analysis_iqr"),
+        tr("lbl_analysis_skew"), tr("lbl_analysis_kurt"), tr("lbl_analysis_outliers"), tr("lbl_analysis_top_values"),
     ]
     col_rows = []
     for c in stats["columns"]:
@@ -448,11 +463,11 @@ def render_statistics_html(stats, df=None, theme="light"):
         role = c.get("role", "normal")
         role_badge = ""
         if role in ("id", "code"):
-            role_badge = badge("SKIPPED", "red")
+            role_badge = badge(tr("lbl_analysis_skipped"), "red")
         elif role in ("phone", "email"):
-            role_badge = badge("SKIPPED", "orange")
+            role_badge = badge(tr("lbl_analysis_skipped"), "orange")
         elif role == "derived":
-            role_badge = badge("DERIVED", "purple")
+            role_badge = badge(tr("lbl_analysis_derived"), "purple")
         row_data.append(f"<b>{c['name']}</b>{role_badge}")
         row_data.append(c["dtype"])
         row_data.append(f"{c['null_count']:,}")
@@ -473,7 +488,7 @@ def render_statistics_html(stats, df=None, theme="light"):
         else:
             row_data.append("-")
         col_rows.append(row_data)
-    html += card(chr(9632) + " Per-Column Analysis", styled_table(col_headers, col_rows, theme), chr(9632), theme)
+    html += card(chr(9632) + " " + tr("lbl_analysis_per_column"), styled_table(col_headers, col_rows, theme), chr(9632), theme)
 
     if df is not None:
         num_cols = [c for c in stats["columns"] if "numeric" in c]
@@ -487,12 +502,12 @@ def render_statistics_html(stats, df=None, theme="light"):
                         col(f'<img src="{img}" style="max-width:100%;margin:4px 0;" alt="Histogram of {cname}">', width=6)
                     )
             if dist_chunks:
-                html += section_header("Numeric Distributions", chr(9632), theme)
+                html += section_header(tr("lbl_analysis_numeric_dist"), chr(9632), theme)
                 dist_html = ""
                 for i in range(0, len(dist_chunks), 2):
                     pair = "".join(dist_chunks[i:i+2])
                     dist_html += row(pair)
-                html += card(chr(9632) + " Numeric Distributions", dist_html, chr(9632), theme)
+                html += card(chr(9632) + " " + tr("lbl_analysis_numeric_dist"), dist_html, chr(9632), theme)
 
     corr = stats["correlation"]
     if corr and corr["columns"]:
@@ -506,12 +521,12 @@ def render_statistics_html(stats, df=None, theme="light"):
         for i, r_val in enumerate(corr["matrix"]):
             r = [f"<b>{corr['columns'][i]}</b>"]
             for val in r_val:
-                bg = _corr_color(val)
+                bg = _corr_color(val, theme)
                 r.append(f'<span style="display:block;background:{bg};text-align:center;padding:2px 4px;">{val}</span>')
             corr_rows.append(r)
         corr_body += styled_table(corr_headers, corr_rows, theme, first_col_left=True)
-        html += section_header("Correlation Heatmap", chr(9670), theme)
-        html += card(chr(9670) + " Correlation Heatmap", corr_body, chr(9670), theme)
+        html += section_header(tr("lbl_analysis_correlation"), chr(9670), theme)
+        html += card(chr(9670) + " " + tr("lbl_analysis_correlation"), corr_body, chr(9670), theme)
 
     if df is not None:
         cols_info = stats.get("columns", [])
@@ -528,8 +543,8 @@ def render_statistics_html(stats, df=None, theme="light"):
                         width=6,
                     )
             if pie_row:
-                html += section_header("Category Distribution", chr(9679), theme)
-                html += card(chr(9679) + " Category Distribution", row(pie_row), chr(9679), theme)
+                html += section_header(tr("lbl_analysis_category_dist"), chr(9679), theme)
+                html += card(chr(9679) + " " + tr("lbl_analysis_category_dist"), row(pie_row), chr(9679), theme)
 
         date_cols_raw = df.select_dtypes(include=["datetime"]).columns.tolist()
         num_cols_all = [c["name"] for c in cols_info if c.get("numeric")]
@@ -550,8 +565,8 @@ def render_statistics_html(stats, df=None, theme="light"):
                     except Exception:
                         continue
             if trend_row:
-                html += section_header("Trend Analysis", chr(9632), theme)
-                html += card(chr(9632) + " Trend Analysis", row(trend_row), chr(9632), theme)
+                html += section_header(tr("lbl_analysis_trend"), chr(9632), theme)
+                html += card(chr(9632) + " " + tr("lbl_analysis_trend"), row(trend_row), chr(9632), theme)
 
         num_names = [c["name"] for c in cols_info if c.get("numeric")]
         if len(num_names) >= 2:
@@ -575,8 +590,8 @@ def render_statistics_html(stats, df=None, theme="light"):
                 scatter_html = ""
                 for si in range(0, min(len(scatter_items), 6), 2):
                     scatter_html += row("".join(scatter_items[si:si+2]))
-                html += section_header("Pairwise Relationships", chr(9632), theme)
-                html += card(chr(9632) + " Pairwise Relationships", scatter_html, chr(9632), theme)
+                html += section_header(tr("lbl_analysis_pairwise"), chr(9632), theme)
+                html += card(chr(9632) + " " + tr("lbl_analysis_pairwise"), scatter_html, chr(9632), theme)
 
         dim_for_radar = [c["name"] for c in cols_info
                          if not c.get("numeric") and 2 <= c.get("unique_count", 999) <= 8
@@ -598,8 +613,8 @@ def render_statistics_html(stats, df=None, theme="light"):
                         values_dict[nc].append(round(float(gdf[nc].mean()), 2))
                 img = chart_radar(labels, values_dict, f"Metrics by {radar_dim}")
                 if img:
-                    html += section_header("Radar Summary", chr(9679), theme)
-                    html += card(chr(9679) + f" Radar Summary — by {radar_dim}",
+                    html += section_header(tr("lbl_analysis_radar"), chr(9679), theme)
+                    html += card(chr(9679) + " " + tr("lbl_analysis_radar_by").format(dim=radar_dim),
                                  col(f'<img src="{img}" style="max-width:100%;">', width=6), chr(9679), theme)
             except Exception:
                 pass

@@ -1,5 +1,8 @@
+import os
 import sys
 from pathlib import Path
+
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--use-gl=angle --use-angle=swiftshader"
 
 from PyQt6.QtCore import QSettings, Qt, QTimer
 from PyQt6.QtGui import QIcon

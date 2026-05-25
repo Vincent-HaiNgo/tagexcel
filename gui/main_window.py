@@ -38,7 +38,7 @@ class MainWindow(QMainWindow):
         self._tabs = QTabWidget()
         self.setCentralWidget(self._tabs)
 
-        self._dashboard_tab = DashboardTab(data_manager)
+        self._dashboard_tab = DashboardTab(data_manager, self._ai_client)
         self._files_tab = FilesTab(data_manager)
         self._parsing_tab = ParsingTab(
             data_manager, parser_engine, ai_client
@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
                 "QPushButton:pressed { background-color: #00695c; } "
                 "QComboBox QAbstractItemView { selection-background-color: #2a82da; selection-color: white; }"
                 "QLabel#infoStatus { font-weight: bold; color: #00FA9A; }"
-                "QTabBar::tab { padding: 8px 16px; color: #999; }"
+                "QTabBar::tab { padding: 8px 16px; color: #ccc; }"
                 "QTabBar::tab:selected { background-color: #00897b; color: white; font-weight: bold; }"
             )
         else:

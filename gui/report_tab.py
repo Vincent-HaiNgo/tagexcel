@@ -1,4 +1,5 @@
 import json
+from html import escape as _html_escape
 
 from PyQt6.QtWidgets import (
     QWidget,
@@ -6,16 +7,18 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QLabel,
-    QTextEdit,
     QSplitter,
     QMessageBox,
     QApplication,
 )
 from PyQt6.QtCore import Qt, QSettings
+from PyQt6.QtWebEngineWidgets import QWebEngineView
 
 from utils.i18n import tr, get_language
+from utils.html_templates import wrap_ai_html, _AI_STYLE_GUIDE_EN, _AI_STYLE_GUIDE_VI
 from utils.export_utils import save_html_file
 from utils.status_utils import StatusHelper
+from utils.shared import strip_code_fence, BASE_URL
 from gui.table_view import PaginatedTableView
 from gui.dialogs import ReportDialog
 from core.report_engine import (
@@ -56,8 +59,7 @@ class ReportTab(QWidget):
         self._table = PaginatedTableView()
         splitter.addWidget(self._table)
 
-        self._output = QTextEdit()
-        self._output.setReadOnly(True)
+        self._output = QWebEngineView()
         splitter.addWidget(self._output)
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
@@ -67,6 +69,18 @@ class ReportTab(QWidget):
         self._btn_export.clicked.connect(self._on_export)
 
         self._refresh_ui()
+
+    def _display(self, html):
+        self._output.setHtml(html, BASE_URL)
+
+    def _display_text(self, text):
+        self._output.setHtml(
+            f"<pre style='font-family:monospace;white-space:pre-wrap;'>{_html_escape(text)}</pre>",
+            BASE_URL,
+        )
+
+    def _display_clear(self):
+        self._output.setHtml("", BASE_URL)
 
     def retranslate_ui(self):
         self._btn_create.setText(tr("dlg_report_title"))
@@ -82,7 +96,7 @@ class ReportTab(QWidget):
             self._table.set_dataframe(self._data_manager.df_working)
         else:
             self._table.set_dataframe(None)
-            self._output.clear()
+            self._display_clear()
 
     def _on_create_report(self):
         df = self._data_manager.df_working
@@ -120,6 +134,7 @@ class ReportTab(QWidget):
                         "Tr\u1ea3 v\u1ec1 HTML ho\u00e0n ch\u1ec9nh v\u1edbi <h2>, <h3>, <p>, <table>, <span style='...'>.\n"
                         "Bao g\u1ed3m: T\u00f3m t\u1eaft, B\u1ea3ng d\u1eef li\u1ec7u, Nh\u1eadn x\u00e9t, \u0110\u1ec1 xu\u1ea5t.\n"
                         "Kh\u00f4ng th\u00eam v\u0103n b\u1ea3n n\u00e0o ngo\u00e0i HTML."
+                        + _AI_STYLE_GUIDE_VI
                     )
                 else:
                     system_prompt = (
@@ -127,28 +142,21 @@ class ReportTab(QWidget):
                         "Return complete HTML with <h2>, <h3>, <p>, <table>, <span style='...'>.\n"
                         "Include: Summary, Data Table, Key Findings, Recommendations.\n"
                         "Do NOT add any text outside the HTML."
+                        + _AI_STYLE_GUIDE_EN
                     )
 
                 user_message = json.dumps(summary, ensure_ascii=False, default=str)
                 response = self._ai_client.chat(system_prompt, user_message)
 
-                content = response.strip()
-                if content.startswith("```"):
-                    lines = content.split("\n")
-                    if lines and lines[0].startswith("```"):
-                        lines = lines[1:]
-                    if lines and lines[-1].strip().startswith("```"):
-                        lines = lines[:-1]
-                    content = "\n".join(lines).strip()
+                content = strip_code_fence(response)
                 if content.startswith("<"):
-                    self._output.setHtml(content)
+                    self._display(wrap_ai_html(content, tr("tab_report"), self._get_theme()))
                 else:
-                    self._output.setPlainText(content)
+                    self._display_text(content)
             else:
                 report = compute_report(df, config)
-                theme = QSettings("tagexcel", "tagexcel").value("theme", "light")
-                html = render_report_html(report, theme=theme)
-                self._output.setHtml(html)
+                html = render_report_html(report, theme=self._get_theme())
+                self._display(html)
 
             self._has_output = True
             self._btn_export.setEnabled(True)
@@ -162,7 +170,11 @@ class ReportTab(QWidget):
             self._btn_create.setEnabled(True)
 
     def _on_export(self):
-        save_html_file(self, self._output.toHtml())
+        self._output.page().toHtml(lambda html: save_html_file(self, html))
 
     def refresh(self):
         self._refresh_ui()
+
+    @staticmethod
+    def _get_theme():
+        return QSettings("tagexcel", "tagexcel").value("theme", "light")

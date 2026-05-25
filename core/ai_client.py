@@ -1,7 +1,12 @@
 import json
+import threading
 from typing import List
 
 import requests
+from PyQt6.QtWidgets import QApplication
+
+from utils.config import AI_TIMEOUT
+from utils.shared import strip_code_fence
 
 SYSTEM_PROMPT = """You are a data cleaning expert. Analyze the provided dataset schema and suggest cleaning operations.
 Return ONLY a JSON array of cleaning operations. Each operation must be one of:
@@ -25,6 +30,7 @@ class AIClient:
         self._model = ""
         self._api_key = ""
         self._url = ""
+        self._timeout = AI_TIMEOUT
 
     def configure(self, provider: str, model: str, api_key: str, url: str):
         self._provider = provider
@@ -50,13 +56,7 @@ class AIClient:
             prompt += "\nIMPORTANT: Respond in Vietnamese language."
         user_message = json.dumps(df_info, ensure_ascii=False, default=str)
         content = self._call_api(prompt, user_message)
-        if content.startswith("```"):
-            lines = content.split("\n")
-            if lines and lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].strip() == "```":
-                lines = lines[:-1]
-            content = "\n".join(lines).strip()
+        content = strip_code_fence(content)
         try:
             return json.loads(content)
         except json.JSONDecodeError:
@@ -83,7 +83,43 @@ class AIClient:
             headers["Authorization"] = f"Bearer {self._api_key}"
 
         url = f"{self._url}/v1/chat/completions"
-        resp = requests.post(url, json=payload, headers=headers, timeout=60)
-        resp.raise_for_status()
 
-        return resp.json()["choices"][0]["message"]["content"].strip()
+        _result = {}
+        _error = {}
+
+        def _do_request():
+            try:
+                resp = requests.post(url, json=payload, headers=headers, timeout=self._timeout)
+                resp.raise_for_status()
+                try:
+                    _result["content"] = resp.json()["choices"][0]["message"]["content"].strip()
+                except (KeyError, IndexError, TypeError):
+                    _error["exc"] = ValueError(
+                        "AI returned an unexpected response structure. "
+                        "Please verify your API URL and model configuration."
+                    )
+            except requests.exceptions.Timeout:
+                _error["exc"] = TimeoutError(
+                    f"AI request timed out after {self._timeout} seconds. "
+                    "The server took too long to respond. Please try again."
+                )
+            except requests.exceptions.ConnectionError:
+                _error["exc"] = ConnectionError(
+                    "Could not connect to the AI server. "
+                    "Please check your network and the API URL."
+                )
+            except Exception as e:
+                _error["exc"] = e
+
+        thread = threading.Thread(target=_do_request, daemon=True)
+        thread.start()
+
+        while thread.is_alive():
+            app = QApplication.instance()
+            if app:
+                app.processEvents()
+            thread.join(0.05)
+
+        if _error:
+            raise _error["exc"]
+        return _result["content"]

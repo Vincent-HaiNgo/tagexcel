@@ -1,5 +1,4 @@
 import unicodedata
-import re
 import warnings
 from typing import Tuple, List
 

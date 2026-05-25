@@ -133,9 +133,7 @@ class CleanupTab(QWidget):
 
         dup_rows = int(df.duplicated().sum())
 
-        dup_col_mask = df.apply(
-            lambda c: tuple(c.values), axis=0
-        ).duplicated()
+        dup_col_mask = df.T.duplicated()
         dup_cols = int(dup_col_mask.sum())
 
         if dup_rows == 0 and dup_cols == 0:

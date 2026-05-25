@@ -25,6 +25,7 @@ import json
 from PyQt6.QtCore import Qt
 
 from utils.i18n import tr, get_language
+from utils.shared import build_df_schema
 
 
 class RemoveFilesDialog(QDialog):
@@ -358,26 +359,7 @@ class PivotDialog(QDialog):
         self._lbl_ai_status.setText(tr("msg_ai_suggest_thinking"))
         QApplication.processEvents()
 
-        df = self._df
-        columns_info = []
-        for col in df.columns:
-            col_data = df[col]
-            null_count = int(col_data.isna().sum())
-            unique_count = int(col_data.nunique())
-            samples = col_data.dropna().head(3).astype(str).tolist()
-            columns_info.append({
-                "name": str(col),
-                "dtype": str(col_data.dtype),
-                "unique_count": unique_count,
-                "null_count": null_count,
-                "samples": samples,
-            })
-
-        payload = {
-            "total_rows": len(df),
-            "total_columns": len(df.columns),
-            "columns": columns_info,
-        }
+        payload = build_df_schema(self._df)
 
         if get_language() == "VI":
             system_prompt = (
@@ -733,25 +715,7 @@ class ReportDialog(QDialog):
         self._lbl_ai_status.setText(tr("msg_ai_suggest_thinking"))
         QApplication.processEvents()
 
-        df = self._df
-        columns_info = []
-        for col in df.columns:
-            col_data = df[col]
-            null_count = int(col_data.isna().sum())
-            unique_count = int(col_data.nunique())
-            samples = col_data.dropna().head(3).astype(str).tolist()
-            columns_info.append({
-                "name": str(col),
-                "dtype": str(col_data.dtype),
-                "unique_count": unique_count,
-                "null_count": null_count,
-                "samples": samples,
-            })
-        payload = {
-            "total_rows": len(df),
-            "total_columns": len(df.columns),
-            "columns": columns_info,
-        }
+        payload = build_df_schema(self._df)
 
         if get_language() == "VI":
             system_prompt = (
@@ -800,7 +764,7 @@ class ReportDialog(QDialog):
 
             self._selected.clear()
             if "Columns:" in parsed:
-                valid = set(str(c) for c in df.columns)
+                valid = set(str(c) for c in self._df.columns)
                 for item in parsed["Columns:"].split(","):
                     name = item.strip()
                     if name in valid:
