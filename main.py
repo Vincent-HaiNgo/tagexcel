@@ -8,20 +8,21 @@ from PyQt6.QtCore import QSettings, Qt, QTimer
 from PyQt6.QtGui import QIcon
 
 project_root = Path(__file__).parent
-venv_python = project_root / "venv" / "Scripts" / "python.exe"
 
-if not venv_python.exists():
-    print("ERROR: venv not found. Run: python -m venv venv", file=sys.stderr)
-    sys.exit(1)
+if not getattr(sys, 'frozen', False):
+    venv_python = project_root / "venv" / "Scripts" / "python.exe"
+    if not venv_python.exists():
+        print("ERROR: venv not found. Run: python -m venv venv", file=sys.stderr)
+        sys.exit(1)
 
-current_exe = Path(sys.executable).resolve()
-expected_exe = venv_python.resolve()
-if current_exe != expected_exe:
-    print(
-        f"ERROR: Must run with venv Python: {expected_exe}",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+    current_exe = Path(sys.executable).resolve()
+    expected_exe = venv_python.resolve()
+    if current_exe != expected_exe:
+        print(
+            f"ERROR: Must run with venv Python: {expected_exe}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 from PyQt6.QtWidgets import QApplication
 
