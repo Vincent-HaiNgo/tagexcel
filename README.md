@@ -1,9 +1,11 @@
-# tagexcel
+# tagExcel
 
 A desktop data processing application for Windows 10/11. Load, clean, analyze, transform, and visualize spreadsheet data with AI-assisted operations -- all in a native GUI.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
+
+[EN Chatbox] (assets/260526_tagExcel_EN_Chatbox.jpg)
 
 ## Features
 
@@ -49,7 +51,7 @@ tagexcel supports any OpenAI-compatible API endpoint, including local LLMs via O
 1. Go to **Settings** > **AI Agent**
 2. Fill in:
    - **Provider** -- your provider name (e.g., `OpenAI`, `Groq`)
-   - **Model** -- model ID (e.g., `gpt-4o`, `llama-3.3-70b`)
+   - **Model** -- model ID (e.g., `gpt-5`, `llama-3.3-70b`)
    - **API Key** -- your API key from the provider
    - **URL** -- provider's API endpoint (e.g., `https://api.openai.com`)
 3. Click **Save**
@@ -57,18 +59,19 @@ tagexcel supports any OpenAI-compatible API endpoint, including local LLMs via O
 ### Option B: Local AI via Ollama
 
 1. Download and install [Ollama](https://ollama.com)
-2. Open a terminal and pull your model:
+2. Open Ollama, go to 'Settings', and 'Sign in' (easy is with your Google Account)
+3. In Ollama, (go back) to chat, and in the AI Model dropdown list select:
    ```
-   ollama pull qwen3:0.8b
+   gemma4:31b-cloud
    ```
-3. In tagexcel, go to **Settings** > **AI Agent**
-4. Fill in (API Key is not required):
+4. In tagexcel, go to **Settings** > **AI Agent**
+5. Fill in (API Key is not required):
    - **Provider** -- `Ollama`
-   - **Model** -- your pulled model (e.g., `qwen3:0.8b`)
+   - **Model** -- your pulled model (e.g., `gemma4:31b-cloud`)
    - **API Key** -- leave empty
    - **URL** -- `http://127.0.0.1:11434`
-5. Click **Save**
-6. The Chatbox tab and all AI-assisted features will now use your local LLM
+6. Click **Save**
+7. The Chatbox tab and all AI-assisted features will now use your local LLM
 
 ## Usage
 
