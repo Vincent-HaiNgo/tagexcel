@@ -5,7 +5,7 @@ A desktop data processing application for Windows 10/11. Load, clean, analyze, t
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
 
-[![EN Chatbox] (assets/260526_tagExcel_EN_Chatbox.jpg)
+![EN Chatbox] (assets/260526_tagExcel_EN_Chatbox.jpg)
 
 ## Features
 
