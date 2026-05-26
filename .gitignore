@@ -11,3 +11,4 @@ build/
 *.zip
 *.nsi
 *.ico
+docs/

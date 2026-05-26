@@ -191,6 +191,7 @@ class MainWindow(QMainWindow):
             app.setPalette(palette)
             app.setStyleSheet(
                 "QLineEdit, QTextEdit { background-color: #1e1e1e; } "
+                "QLineEdit { placeholder-text-color: #888; } "
                 "QPushButton { background-color: #00897b; color: white; font-weight: bold; padding: 4px 14px; border-radius: 3px; } "
                 "QPushButton:hover { background-color: #00796b; } "
                 "QPushButton:pressed { background-color: #00695c; } "
@@ -244,6 +245,7 @@ class MainWindow(QMainWindow):
             app.setPalette(palette)
             app.setStyleSheet(
                 "QLineEdit, QTextEdit { background-color: #e0e0e0; } "
+                "QLineEdit { placeholder-text-color: #666; } "
                 "QPushButton { background-color: #00897b; color: white; font-weight: bold; padding: 4px 14px; border-radius: 3px; } "
                 "QPushButton:hover { background-color: #00796b; } "
                 "QPushButton:pressed { background-color: #00695c; } "

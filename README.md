@@ -40,13 +40,43 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## AI Setup
+
+tagexcel supports any OpenAI-compatible API endpoint, including local LLMs via Ollama.
+
+### Option A: Cloud AI (OpenAI, Groq, etc.)
+
+1. Go to **Settings** > **AI Agent**
+2. Fill in:
+   - **Provider** -- your provider name (e.g., `OpenAI`, `Groq`)
+   - **Model** -- model ID (e.g., `gpt-4o`, `llama-3.3-70b`)
+   - **API Key** -- your API key from the provider
+   - **URL** -- provider's API endpoint (e.g., `https://api.openai.com`)
+3. Click **Save**
+
+### Option B: Local AI via Ollama
+
+1. Download and install [Ollama](https://ollama.com)
+2. Open a terminal and pull your model:
+   ```
+   ollama pull qwen3:0.8b
+   ```
+3. In tagexcel, go to **Settings** > **AI Agent**
+4. Fill in (API Key is not required):
+   - **Provider** -- `Ollama`
+   - **Model** -- your pulled model (e.g., `qwen3:0.8b`)
+   - **API Key** -- leave empty
+   - **URL** -- `http://127.0.0.1:11434`
+5. Click **Save**
+6. The Chatbox tab and all AI-assisted features will now use your local LLM
+
 ## Usage
 
 1. Launch tagexcel
 2. Use the **Files** tab to load your spreadsheet data
 3. Navigate through tabs to clean, join, pivot, analyze, or build reports
-4. Use the **Chatbox** tab to describe operations in natural language (requires an OpenAI-compatible API endpoint)
-5. Configure your AI provider in **Settings**
+4. Use the **Chatbox** tab to describe operations in natural language
+5. Configure your AI provider in **Settings** (see AI Setup above)
 6. Export results via the Export button on any tab
 
 ## Tech Stack
