@@ -4,6 +4,7 @@ openpyxl>=3.1.0
 xlrd>=2.0.0
 python-calamine>=0.2.0
 PyQt6>=6.5.0
+PyQt6-WebEngine>=6.5.0
 matplotlib>=3.7.0
 requests>=2.31.0
 pywin32>=306
