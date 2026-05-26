@@ -287,6 +287,10 @@ EN = {
     "lbl_chatbox_workflow": "Workflow",
     "msg_chatbox_operation_plan": "Operation plan",
     "msg_chatbox_parse_workflow_fail": "Failed to parse workflow operations.",
+    "lbl_chat_role_you": "You",
+    "lbl_chat_role_ai": "AI",
+    "lbl_chat_role_system": "System",
+    "msg_chatbox_no_data_prompt": "You are a helpful data assistant in the tagexcel app. The user has not loaded any data yet. Help them get started.",
 }
 VI = {
     "app_title": "tagexcel",
@@ -576,6 +580,10 @@ VI = {
     "lbl_chatbox_workflow": "Quy tr\u00ecnh",
     "msg_chatbox_operation_plan": "K\u1ebf ho\u1ea1ch thao t\u00e1c",
     "msg_chatbox_parse_workflow_fail": "Kh\u00f4ng th\u1ec3 ph\u00e2n t\u00edch thao t\u00e1c quy tr\u00ecnh.",
+    "lbl_chat_role_you": "B\u1ea1n",
+    "lbl_chat_role_ai": "AI",
+    "lbl_chat_role_system": "H\u1ec7 th\u1ed1ng",
+    "msg_chatbox_no_data_prompt": "B\u1ea1n l\u00e0 tr\u1ee3 l\u00fd d\u1eef li\u1ec7u h\u1eefu \u00edch trong \u1ee9ng d\u1ee5ng tagexcel. Ng\u01b0\u1eddi d\u00f9ng ch\u01b0a t\u1ea3i d\u1eef li\u1ec7u n\u00e0o. H\u00e3y gi\u00fap h\u1ecd b\u1eaft \u0111\u1ea7u.",
 }
 
 

@@ -1,4 +1,5 @@
 import json
+import threading
 from html import escape as _html_escape
 from pathlib import Path
 
@@ -85,6 +86,8 @@ Quy t\u1eafc:
 3. K\u1ebf ho\u1ea1ch PH\u1ea2I l\u00e0 JSON h\u1ee3p l\u1ec7. C\u00e1c b\u01b0\u1edbc th\u1ef1c hi\u1ec7n theo th\u1ee9 t\u1ef1.
 4. Gi\u1eef nguy\u00ean ng\u00f4n ng\u1eef g\u1ed1c c\u1ee7a t\u00ean c\u1ed9t. Kh\u00f4ng d\u1ecbch.
 5. M\u00f4 t\u1ea3 ng\u1eafn g\u1ecdn. Kh\u00f4ng th\u00eam v\u0103n b\u1ea3n n\u00e0o ngo\u00e0i JSON khi tr\u1ea3 v\u1ec1 k\u1ebf ho\u1ea1ch."""
+
+_SENTINEL_DISPLAY_CLEAR = object()
 
 
 class ChatboxTab(QWidget):
@@ -338,19 +341,16 @@ class ChatboxTab(QWidget):
             return
 
         self._chat_input.clear()
-        self._append_chat("You", user_text)
+        self._append_chat(tr("lbl_chat_role_you"), user_text)
 
         if not self._ai_client or not self._ai_client.is_configured:
-            self._append_chat("AI", tr("msg_chatbox_no_ai"))
+            self._append_chat(tr("lbl_chat_role_ai"), tr("msg_chatbox_no_ai"))
             return
 
         has_data = self._data_manager.df_working is not None
 
         if not has_data:
-            system_prompt = (
-                "You are a helpful data assistant in the tagexcel app. "
-                "The user has not loaded any data yet. Help them get started."
-            )
+            system_prompt = tr("msg_chatbox_no_data_prompt")
             user_message = user_text
         else:
             df_context = build_df_schema(self._data_manager.df_working)
@@ -372,7 +372,7 @@ class ChatboxTab(QWidget):
         QApplication.processEvents()
 
         thinking_pos = self._chat_display.textCursor().position()
-        self._append_chat("AI", tr("msg_chatbox_thinking"))
+        self._append_chat(tr("lbl_chat_role_ai"), tr("msg_chatbox_thinking"))
         QApplication.processEvents()
 
         try:
@@ -399,7 +399,7 @@ class ChatboxTab(QWidget):
                     )
 
                 self._remove_thinking(thinking_pos)
-                self._append_chat("AI", plan_text)
+                self._append_chat(tr("lbl_chat_role_ai"), plan_text)
                 mid = self._chat_db.add_message(
                     self._active_session_id,
                     "assistant",
@@ -413,7 +413,7 @@ class ChatboxTab(QWidget):
                 self._btn_reject.show()
             else:
                 self._remove_thinking(thinking_pos)
-                self._append_chat("AI", content)
+                self._append_chat(tr("lbl_chat_role_ai"), content)
                 self._chat_db.add_message(
                     self._active_session_id, "assistant", content
                 )
@@ -426,7 +426,7 @@ class ChatboxTab(QWidget):
         except Exception as e:
             self._remove_thinking(thinking_pos)
             self._append_chat(
-                "AI", tr("msg_chatbox_ai_fail").format(error=str(e))
+                tr("lbl_chat_role_ai"), tr("msg_chatbox_ai_fail").format(error=str(e))
             )
             self._lbl_status.setText(
                 tr("msg_chatbox_ai_fail").format(error=str(e))
@@ -464,31 +464,74 @@ class ChatboxTab(QWidget):
 
     def _execute_plan(self, plan: list):
         self._set_busy(True)
-        for i, step in enumerate(plan):
-            step_num = step.get("step", i + 1)
-            action = step.get("action", "")
-            params = step.get("params", {})
+        self._status.working(tr("msg_status_working"))
+        QApplication.processEvents()
+
+        _step_results = []
+        _error = {}
+
+        def _do_execute():
             try:
-                self._execute_step(action, params)
-                self._append_chat(
-                    "System",
-                    tr("msg_chatbox_step_ok").format(
-                        step=step_num, desc=action
-                    ),
-                )
-                QApplication.processEvents()
+                for i, step in enumerate(plan):
+                    step_num = step.get("step", i + 1)
+                    action = step.get("action", "")
+                    params = step.get("params", {})
+                    try:
+                        html, is_export = self._execute_step(action, params)
+                        _step_results.append(("ok", step_num, action, html, is_export))
+                    except Exception as e:
+                        _step_results.append(("fail", step_num, str(e), None, False))
+                        return
             except Exception as e:
+                _error["exc"] = e
+
+        thread = threading.Thread(target=_do_execute, daemon=True)
+        thread.start()
+
+        while thread.is_alive():
+            app = QApplication.instance()
+            if app:
+                app.processEvents()
+            thread.join(0.05)
+
+        if _error:
+            self._set_busy(False)
+            self._status.error(str(_error["exc"]))
+            raise _error["exc"]
+
+        sender_system = tr("lbl_chat_role_system")
+
+        for msg_type, step_num, text, html, is_export in _step_results:
+            if msg_type == "ok":
                 self._append_chat(
-                    "System",
-                    tr("msg_chatbox_step_fail").format(
-                        step=step_num, error=str(e)
-                    ),
+                    sender_system,
+                    tr("msg_chatbox_step_ok").format(step=step_num, desc=text),
+                )
+                if is_export:
+                    try:
+                        export_dataframe(self, self._data_manager)
+                    except Exception as e:
+                        self._append_chat(
+                            sender_system,
+                            tr("msg_chatbox_step_fail").format(step=step_num, error=str(e)),
+                        )
+                        break
+                elif html is _SENTINEL_DISPLAY_CLEAR:
+                    self._display_clear()
+                elif html is not None:
+                    self._display(html)
+            else:
+                self._append_chat(
+                    sender_system,
+                    tr("msg_chatbox_step_fail").format(step=step_num, error=text),
                 )
                 break
         else:
-            self._append_chat("System", tr("msg_chatbox_plan_done"))
+            self._append_chat(sender_system, tr("msg_chatbox_plan_done"))
+
         self._set_busy(False)
         self._refresh_ui()
+        self._status.done(tr("msg_status_done"))
 
     def _execute_step(self, action: str, params: dict):
         if action == "parse":
@@ -497,7 +540,7 @@ class ChatboxTab(QWidget):
                 raise ValueError("No data to parse.")
             df_clean, _ = self._parser_engine.parse(df)
             self._data_manager.update_working(df_clean)
-            self._display_output(None)
+            return (_SENTINEL_DISPLAY_CLEAR, False)
 
         elif action == "join":
             file_path = params.get("file_path", "")
@@ -530,7 +573,7 @@ class ChatboxTab(QWidget):
                 left_on=left_col, right_on=right_col, how=how,
             )
             self._data_manager.update_working(merged)
-            self._display_output(None)
+            return (_SENTINEL_DISPLAY_CLEAR, False)
 
         elif action == "delete":
             df = self._data_manager.df_working
@@ -573,7 +616,7 @@ class ChatboxTab(QWidget):
                 )
 
             self._data_manager.update_working(df_result)
-            self._display_output(None)
+            return (_SENTINEL_DISPLAY_CLEAR, False)
 
         elif action == "pivot":
             df = self._data_manager.df_working
@@ -619,7 +662,7 @@ class ChatboxTab(QWidget):
                 "</style></head><body><h2>Pivot Table</h2>"
                 f"{html}</body></html>"
             )
-            self._display_output(styled)
+            return (styled, False)
 
         elif action == "analyze":
             df = self._data_manager.df_working
@@ -627,7 +670,7 @@ class ChatboxTab(QWidget):
                 raise ValueError("No data to analyze.")
             stats = compute_statistics(df)
             html = render_statistics_html(stats, df=df, theme=self._get_theme())
-            self._display_output(html)
+            return (html, False)
 
         elif action == "report":
             df = self._data_manager.df_working
@@ -651,7 +694,7 @@ class ChatboxTab(QWidget):
             }
             report = compute_report(df, config)
             html = render_report_html(report, theme=self._get_theme())
-            self._display_output(html)
+            return (html, False)
 
         elif action == "dashboard":
             df = self._data_manager.df_working
@@ -659,13 +702,13 @@ class ChatboxTab(QWidget):
                 raise ValueError("No data for dashboard.")
             data = compute_dashboard(df)
             html = render_dashboard_html(data, df=df, theme=self._get_theme())
-            self._display_output(html)
+            return (html, False)
 
         elif action == "export":
             df = self._data_manager.df_working
             if df is None:
                 raise ValueError("No data to export.")
-            export_dataframe(self, self._data_manager, df)
+            return (None, True)
 
         else:
             raise ValueError(f"Unknown action: {action}")
@@ -731,8 +774,8 @@ class ChatboxTab(QWidget):
         self._latest_accepted_ops = None
         for msg in msgs:
             role_display = (
-                "You" if msg["role"] == "user"
-                else ("AI" if msg["role"] == "assistant" else "System")
+                tr("lbl_chat_role_you") if msg["role"] == "user"
+                else (tr("lbl_chat_role_ai") if msg["role"] == "assistant" else tr("lbl_chat_role_system"))
             )
             self._append_chat(role_display, msg["content"])
             if msg.get("operations_json") and msg.get("accepted"):
@@ -772,7 +815,7 @@ class ChatboxTab(QWidget):
                             f"  Step {step.get('step', '?')}: {action} "
                             f"{params_str}\n"
                         )
-                    self._append_chat("System", plan_text)
+                    self._append_chat(tr("lbl_chat_role_system"), plan_text)
                     self._pending_plan = plan
                     self._pending_msg_id = None
                     self._btn_accept.show()
